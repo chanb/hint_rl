@@ -73,7 +73,7 @@ def get_openmath_rl_dataset(
             {
                 "role": "user",
                 "content": sample["question"]
-                + "\nPlease put your final answer within \\boxed{}.",
+                + "\nPlease reason step by step, and put your final answer within \\boxed{}.",
             }
         ]
         return {"messages": messages}

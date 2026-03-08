@@ -6,6 +6,10 @@ from areal.dataset import get_custom_dataset
 from areal.utils.hf_utils import load_hf_tokenizer
 
 
+def dynamic_filter_fn(x):
+    return 0 < x["rewards"].mean() < 1
+
+
 def main(args):
     config, _ = load_expr_config(args, GRPOConfig)
     tokenizer = load_hf_tokenizer(config.tokenizer_path)
@@ -40,7 +44,7 @@ def main(args):
             workflow_kwargs=workflow_kwargs,
             eval_workflow="areal.workflow.rlvr.RLVRWorkflow",
             eval_workflow_kwargs=eval_workflow_kwargs,
-            dynamic_filter_fn=lambda x: 0 < x["rewards"].mean() < 1,
+            dynamic_filter_fn=dynamic_filter_fn,
         )
 
 
