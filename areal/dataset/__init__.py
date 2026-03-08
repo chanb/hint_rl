@@ -15,6 +15,7 @@ VALID_DATASETS = [
     "virl39k",
     "hh-rlhf",
     "torl_data",
+    "questa",
 ]
 
 logger = logging.getLogger("Dataset")
@@ -43,6 +44,16 @@ def _get_custom_dataset(
         from .gsm8k import get_gsm8k_rl_dataset
 
         return get_gsm8k_rl_dataset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "questa" in path and type == "rl":
+        from .gsm8k import get_openmath_rl_dataset
+
+        return get_openmath_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,

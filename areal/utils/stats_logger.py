@@ -93,7 +93,9 @@ class StatsLogger:
         # tensorboard logging
         self.summary_writer = None
         if self.config.tensorboard.path is not None:
-            self.summary_writer = SummaryWriter(log_dir=self.config.tensorboard.path)
+            self.summary_writer = SummaryWriter(
+                log_dir=f"{self.config.tensorboard.path}/{self.config.experiment_name}_{self.config.trial_name}_{suffix}"
+            )
 
     def state_dict(self):
         return {

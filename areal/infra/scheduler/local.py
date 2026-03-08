@@ -847,36 +847,45 @@ class LocalScheduler(Scheduler):
         url = f"http://{worker_info.worker.ip}:{port}/configure"
 
         try:
-            response = requests.post(
-                url,
-                data=orjson.dumps(
-                    serialize_value(
-                        dict(
-                            config=self.exp_config,
-                            role=worker_info.role,
-                            rank=worker_rank,
+            num_timeouts = 10
+            curr_timeout = 0
+            while True:
+                response = requests.post(
+                    url,
+                    data=orjson.dumps(
+                        serialize_value(
+                            dict(
+                                config=self.exp_config,
+                                role=worker_info.role,
+                                rank=worker_rank,
+                            )
                         )
-                    )
-                ),
-                headers={"Content-Type": "application/json"},
-                timeout=300.0,
-            )
-
-            if response.status_code == 200:
-                logger.info(f"Configuration successfully on worker '{worker_id}'")
-                return
-            elif response.status_code == 400:
-                error_detail = response.json().get("detail", "Unknown error")
-                raise WorkerConfigurationError(worker_id, error_detail, str(400))
-            elif response.status_code == 500:
-                error_detail = response.json().get("detail", "Unknown error")
-                raise WorkerConfigurationError(worker_id, error_detail, str(500))
-            else:
-                raise WorkerConfigurationError(
-                    worker_id,
-                    f"Unexpected status code: {response.status_code}",
-                    str(response.status_code),
+                    ),
+                    headers={"Content-Type": "application/json"},
+                    timeout=300.0,
                 )
+
+                if response.status_code == 200:
+                    logger.info(f"Configuration successfully on worker '{worker_id}'")
+                    return
+                else:
+                    curr_timeout += 1
+                    if num_timeouts < curr_timeout:
+                        if response.status_code == 400:
+                            error_detail = response.json().get("detail", "Unknown error")
+                            raise WorkerConfigurationError(worker_id, error_detail, str(400))
+                        elif response.status_code == 500:
+                            error_detail = response.json().get("detail", "Unknown error")
+                            raise WorkerConfigurationError(worker_id, error_detail, str(500))
+                        else:
+                            raise WorkerConfigurationError(
+                                worker_id,
+                                f"Unexpected status code: {response.status_code}",
+                                str(response.status_code),
+                            )
+                    else:
+                        time.sleep(5.0)
+                        logger.info(f"Configuration failed on worker '{worker_id}' for {curr_timeout} times")
 
         except requests.exceptions.ConnectionError as e:
             if (

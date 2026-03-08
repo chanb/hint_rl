@@ -58,3 +58,37 @@ def get_gsm8k_rl_dataset(
         dataset = dataset.filter(filter_length)
 
     return dataset
+
+
+def get_openmath_rl_dataset(
+    path: str,
+    split: str,
+    tokenizer,
+    max_length: int | None = None,
+):
+    dataset = load_dataset(path=path, name="default", split=split)
+
+    def process(sample):
+        messages = [
+            {
+                "role": "user",
+                "content": sample["question"]
+                + "\nPlease put your final answer within \\boxed{}.",
+            }
+        ]
+        return {"messages": messages}
+
+    dataset = dataset.map(process).remove_columns(["question"])
+
+    # Filter out sequences longer than max_length if tokenizer and max_length are provided
+    if max_length is not None:
+
+        def filter_length(sample):
+            # Tokenize the user content to check length
+            content = sample["messages"][0]["content"]
+            tokens = tokenizer.encode(content)
+            return len(tokens) <= max_length
+
+        dataset = dataset.filter(filter_length)
+
+    return dataset
