@@ -1087,17 +1087,17 @@ class WorkflowExecutor:
                     if not should_accept_traj and should_accept_fn is not None:
                         reason = "rejected"
 
-                # Dump trajectory to file
-                if self.config.dump_to_file:
-                    dump_success, dump_reason = await self._dump_trajectory(
-                        traj, task_id, pending_task.is_eval
-                    )
-                    if not dump_success:
-                        self.logger.warning(
-                            f"Failed to dump trajectory for task {task_id}: {dump_reason}"
-                        )
-
                 if should_accept_traj:
+                    # Dump accepted trajectory to file
+                    if self.config.dump_to_file:
+                        dump_success, dump_reason = await self._dump_trajectory(
+                            traj, task_id, pending_task.is_eval
+                        )
+                        if not dump_success:
+                            self.logger.warning(
+                                f"Failed to dump trajectory for task {task_id}: {dump_reason}"
+                            )
+
                     manager.on_rollout_accepted()
                     stats_tracker.get("rollout").scalar(accepted=1)
                     trace_session_event(

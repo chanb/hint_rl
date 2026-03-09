@@ -1,6 +1,6 @@
 import sys
 
-from areal import PPOTrainer
+from areal import PPOTrainer, CurriculumPPOTrainer
 from areal.api.cli_args import GRPOConfig, load_expr_config
 from areal.dataset import get_custom_dataset
 from areal.utils.hf_utils import load_hf_tokenizer
@@ -34,18 +34,32 @@ def main(args):
     eval_workflow_kwargs = workflow_kwargs.copy()
     eval_workflow_kwargs["gconfig"] = config.gconfig.new(temperature=0.6)
 
-    with PPOTrainer(
-        config,
-        train_dataset=train_dataset,
-        valid_dataset=valid_dataset,
-    ) as trainer:
-        trainer.train(
-            workflow="areal.workflow.rlvr.RLVRWorkflow",
-            workflow_kwargs=workflow_kwargs,
-            eval_workflow="areal.workflow.rlvr.RLVRWorkflow",
-            eval_workflow_kwargs=eval_workflow_kwargs,
-            dynamic_filter_fn=dynamic_filter_fn,
-        )
+    if config.ratio_curriculum is None:
+        with PPOTrainer(
+            config,
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+        ) as trainer:
+            trainer.train(
+                workflow="areal.workflow.rlvr.RLVRWorkflow",
+                workflow_kwargs=workflow_kwargs,
+                eval_workflow="areal.workflow.rlvr.RLVRWorkflow",
+                eval_workflow_kwargs=eval_workflow_kwargs,
+                dynamic_filter_fn=dynamic_filter_fn,
+            )
+    else:
+        with CurriculumPPOTrainer(
+            config,
+            train_dataset=train_dataset,
+            valid_dataset=valid_dataset,
+        ) as trainer:
+            trainer.train(
+                workflow="areal.workflow.rlvr.RLVRWorkflow",
+                workflow_kwargs=workflow_kwargs,
+                eval_workflow="areal.workflow.rlvr.RLVRWorkflow",
+                eval_workflow_kwargs=eval_workflow_kwargs,
+                dynamic_filter_fn=dynamic_filter_fn,
+            )
 
 
 if __name__ == "__main__":

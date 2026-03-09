@@ -2217,6 +2217,12 @@ class PPOConfig(BaseExperimentConfig):
             "This results in variable-sized batches of valid data."
         },
     )
+    ratio_curriculum: float | None = field(
+        default=None,
+        metadata={
+            "help": "Enable dynamic partial hint conditioning on sample"
+        }
+    )
 
     def __post_init__(self):
         """Validate the eval generation config."""

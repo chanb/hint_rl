@@ -24,12 +24,20 @@ uv pip install ipdb
 
 Run code:
 ```
+# Local scheduler
 cd /workspace/hint_rl
 python3 cc_scripts/openmath_rl.py --config cc_scripts/openmath_questa_50_grpo.yaml scheduler.type=local
 
-# Ray
-ray start --head
+# Ray scheduler
+ray start --head --disable-usage-stats
 python3 cc_scripts/openmath_rl.py --config cc_scripts/openmath_questa_50_grpo.yaml scheduler.type=ray
+```
+
+Tensorboard:
+```
+Compute node $: tensorboard --logdir=. --host 0.0.0.0 --load_fast false
+
+Local $: ssh -N -f -L localhost:6007:<node_name>:6006 <username>@vulcan.alliancecan.ca
 ```
 
 Process data (within apptainer) as mentioned in paper:

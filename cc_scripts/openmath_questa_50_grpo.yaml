@@ -1,5 +1,5 @@
 experiment_name: openmath-dapo
-trial_name: questa_50
+trial_name: questa_50-bs_16-max_new_token_12000
 
 seed: 1
 enable_offload: false
@@ -120,7 +120,7 @@ vllm:
 
 # datasets
 train_dataset:
-  batch_size: 8
+  batch_size: 16
   shuffle: true
   pin_memory: true
   num_workers: 4
@@ -129,7 +129,7 @@ train_dataset:
   max_length: 4096
 
 valid_dataset:
-  batch_size: 2
+  batch_size: 4
   pin_memory: true
   num_workers: 4
   path: /datasets/questa/openr1_50
@@ -168,7 +168,7 @@ stats_logger:
   wandb:
     mode: disabled
   tensorboard:
-    path: /hint_rl_results
+    path: /hint_rl_results/logs/tensorboard
 
 perf_tracer:
   experiment_name: ${experiment_name}
