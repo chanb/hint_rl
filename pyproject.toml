@@ -7,7 +7,7 @@ name = "areal"
 description = "AReaL: A Large-Scale Asynchronous Reinforcement Learning System"
 readme = "README.md"
 license = {text = "Apache-2.0"}
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 version = "1.0.1"
 authors = [
     {name = "AReaL Team"},
@@ -58,6 +58,7 @@ dependencies = [
     "openhands",
     "langchain",
     "langchain-openai",
+    "flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.1/flash_attn-2.8.1+cu12torch2.9cxx11abiTRUE-cp312-cp312-linux_x86_64.whl",
 
     # Visualization
     "pandas",
@@ -224,9 +225,6 @@ override-dependencies = [
     "openai>=2.8.0",
     "soundfile>=0.12.1,<0.13.0",
 ]
-
-[tool.uv.extra-build-dependencies]
-flash-attn = ["torch>=2.9.1,<2.10"]
 
 # =============================================================================
 # Tool configurations: pytest

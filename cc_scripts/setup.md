@@ -33,6 +33,22 @@ ray start --head --disable-usage-stats
 python3 cc_scripts/openmath_rl.py --config cc_scripts/openmath_questa_50_grpo.yaml scheduler.type=ray
 ```
 
+Run with `uv`:
+```
+module load StdEnv/2023
+module load python/3.12.4
+module load cuda/12.9
+
+uv sync --extra cuda # One-time only
+source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
+
+# Test
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_rl.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_questa_50_grpo.yaml
+
+# Actual run with similar hyperparameters as QuestA
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_rl.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_questa_50_grpo_slurm.yaml
+```
+
 Tensorboard:
 ```
 Compute node $: tensorboard --logdir=. --host 0.0.0.0 --load_fast false

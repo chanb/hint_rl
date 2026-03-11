@@ -1,5 +1,5 @@
 experiment_name: openmath-dapo
-trial_name: local_test-questa_50-bs_16-n_samples_4-max_new_token_12000
+trial_name: dist_training-questa_50-bs_16-n_samples_4-max_new_token_12000
 
 seed: 1
 enable_offload: false
@@ -7,17 +7,17 @@ total_train_epochs: 100
 tokenizer_path: ${actor.path}
 
 cluster:
-  n_nodes: 1
-  n_gpus_per_node: 2
+  n_nodes: 2
+  n_gpus_per_node: 4
   fileroot: /home/chanb/scratch/hint_rl_results
   name_resolve:
     type: nfs
     nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
 
-allocation_mode: sglang:d1p1t1+d1p1t1
+allocation_mode: sglang:d4p1t1+d4p1t1
 
 scheduler:
-  type: local
+  type: slurm
 
 rollout:
   experiment_name: ${experiment_name}
@@ -82,12 +82,11 @@ actor:
       port_count: 2
       gpu: 1
       mem: 32
-      cmd: python3 -m areal.infra.rpc.rpc_server
-      container_type: none
+      cmd: python -m areal.infra.rpc.rpc_server
       env_vars: {}
       additional_bash_cmds:
         - module load StdEnv/2023
-        - module load python/3.10.13
+        - module load python/3.12.4
         - module load cuda/12.9
         - source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
 
@@ -126,7 +125,7 @@ vllm:
 
 # datasets
 train_dataset:
-  batch_size: 4
+  batch_size: 64
   shuffle: true
   pin_memory: true
   num_workers: 4

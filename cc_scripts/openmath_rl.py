@@ -4,10 +4,7 @@ from areal import PPOTrainer, CurriculumPPOTrainer
 from areal.api.cli_args import GRPOConfig, load_expr_config
 from areal.dataset import get_custom_dataset
 from areal.utils.hf_utils import load_hf_tokenizer
-
-
-def dynamic_filter_fn(x):
-    return 0 < x["rewards"].mean() < 1
+from areal.utils.dynamic_filter import filter_always_fail_pass
 
 
 def main(args):
@@ -45,7 +42,7 @@ def main(args):
                 workflow_kwargs=workflow_kwargs,
                 eval_workflow="areal.workflow.rlvr.RLVRWorkflow",
                 eval_workflow_kwargs=eval_workflow_kwargs,
-                dynamic_filter_fn=dynamic_filter_fn,
+                dynamic_filter_fn=filter_always_fail_pass,
             )
     else:
         with CurriculumPPOTrainer(

@@ -6,26 +6,57 @@ from areal.dataset import get_custom_dataset
 from areal.utils.hf_utils import load_hf_tokenizer
 from areal.utils.dataloader import create_dataloader
 
+import math
 import torch
-import torch.utils.dataset as torch_dataset
+import torch.utils.data.dataset as torch_dataset
 
 class HintCurriculumWrapper(torch_dataset.Dataset):
     def __init__(self, dataset: int, delta: int):
         self.dataset = dataset
         self.delta = delta
-        self.partial_hints = torch.zeros(len(dataset), dtype=float)
+        self.hint_length = torch.full((len(dataset),), fill_value=-1, dtype=int)
+        self.partial_hints = torch.zeros(len(dataset), dtype=int)
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx: int) -> float:
-        return self.dataset[idx]
+        sample = self.dataset[idx]
+        question_seg = sample["messages"][0]["content"].split(
+            "## Hint.\n\n"
+        )
+
+        # No hint
+        if len(question_seg) == 1:
+            return sample
+
+        # Partial hint
+        question = question_seg[0]
+        hint = question_seg[1].split(
+            "\nPlease reason step by step, and put your final answer within \\boxed{}."
+        )[0]
+
+        if self.hint_length[idx] == -1:
+            self.hint_length[idx] = len(hint)
+            self.partial_hints[idx] = len(hint)
+
+        partial_hint = hint[:self.partial_hints[idx]]
+
+        sample["messages"][0]["content"] = (
+            question
+            + partial_hint
+            + "\nPlease reason step by step, and put your final answer within \\boxed{}."
+        )
+        return sample
 
     def load_state_dict(self, state_dict):
-        torch.set_rng_state(state_dict["rng"])
+        self.partial_hints = state_dict["partial_hints"]
 
     def state_dict(self):
-        return {"rng": torch.get_rng_state()}
+        return {
+            "partial_hints": self.partial_hints,
+            "hint_length": self.hint_length,
+        }
 
 def main(args):
     config, _ = load_expr_config(args, GRPOConfig)
@@ -36,7 +67,10 @@ def main(args):
         dataset_config=config.train_dataset,
         tokenizer=tokenizer,
     )
+    train_dataset = HintCurriculumWrapper(train_dataset, delta=1)
     dataloader = create_dataloader(train_dataset, rank=0, world_size=1, dataset_config=config.train_dataset)
+
+    sample = next(iter(dataloader))
 
     import ipdb
     ipdb.set_trace()

@@ -380,6 +380,73 @@ class SerializedTokenizer(BaseModel):
         raise ValueError(msg)
 
 
+class SerializedCallable(BaseModel):
+    """Pydantic model for serialized callable via importlib.
+
+    Attributes
+    ----------
+    type : str
+        Type marker, always "callable"
+    module : str
+        Module path (e.g. "mypackage.utils")
+    qualname : str
+        Qualified name of the function (e.g. "my_fn" or "MyClass.my_method")
+    """
+
+    type: Literal["callable"] = Field(default="callable")
+    module: str
+    qualname: str
+
+    @classmethod
+    def from_callable(cls, fn: Any) -> "SerializedCallable":
+        """Create SerializedCallable from a function or method.
+
+        Parameters
+        ----------
+        fn : Any
+            Callable to serialize. Must be importable via its module and qualname
+            (i.e. not a lambda or locally-defined function).
+
+        Returns
+        -------
+        SerializedCallable
+            Serialized callable with module and qualname metadata.
+
+        Raises
+        ------
+        ValueError
+            If the callable is a lambda or not importable.
+        """
+        if fn.__name__ == "<lambda>":
+            raise ValueError(
+                "Lambda functions cannot be serialized. "
+                "Use a named, module-level function instead."
+            )
+        return cls(module=fn.__module__, qualname=fn.__qualname__)
+
+    def to_callable(self) -> Any:
+        """Reconstruct callable from module path and qualname.
+
+        Returns
+        -------
+        Any
+            Reconstructed callable.
+
+        Raises
+        ------
+        ImportError
+            If the module cannot be imported.
+        AttributeError
+            If the callable is not found via its qualname.
+        """
+        module = importlib.import_module(self.module)
+        # Walk qualname to support nested classes e.g. "MyClass.my_method"
+        obj = module
+        for part in self.qualname.split("."):
+            obj = getattr(obj, part)
+        return obj
+
+
 def serialize_value(value: Any) -> Any:
     """Recursively serialize a value, converting tensors and dataclasses to serialized dicts.
 
@@ -443,6 +510,10 @@ def serialize_value(value: Any) -> Any:
     # Handle tuple - convert to list and recursively serialize
     if isinstance(value, tuple):
         return [serialize_value(item) for item in value]
+
+    # Handle callables (functions, methods) - serialize by module + qualname
+    if callable(value):
+        return SerializedCallable.from_callable(value).model_dump()
 
     # `launch_server` returns a subprocess.Popen, skip it
     if isinstance(value, subprocess.Popen):
@@ -515,6 +586,16 @@ def deserialize_value(value: Any) -> Any:
             except Exception as e:
                 logger.warning(
                     f"Failed to deserialize ndarray, treating as regular dict: {e}"
+                )
+
+        # Check for SerializedCallable marker
+        if value.get("type") == "callable":
+            try:
+                serialized_callable = SerializedCallable.model_validate(value)
+                return serialized_callable.to_callable()
+            except Exception as e:
+                logger.warning(
+                    f"Failed to deserialize callable, treating as regular dict: {e}"
                 )
 
         # Check for SerializedTensor marker
