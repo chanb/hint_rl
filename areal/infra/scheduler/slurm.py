@@ -76,7 +76,7 @@ class SlurmScheduler(Scheduler):
         container_type: str = "none",
         container_mounts: str | None = None,
         srun_additional_args: str = "--overcommit --unbuffered --mpi=pmi2 -K --chdir $PWD",
-        startup_timeout: float = 300.0,
+        startup_timeout: float = 3600.0,
         health_check_interval: float = 5.0,
         enable_tms_offload: bool | None = None,
         name_resolve_type: str = "nfs",

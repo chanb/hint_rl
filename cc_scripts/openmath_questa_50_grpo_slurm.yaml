@@ -7,8 +7,8 @@ total_train_epochs: 100
 tokenizer_path: ${actor.path}
 
 cluster:
-  n_nodes: 2
-  n_gpus_per_node: 4
+  n_nodes: 8
+  n_gpus_per_node: 1
   fileroot: /home/chanb/scratch/hint_rl_results
   name_resolve:
     type: nfs
