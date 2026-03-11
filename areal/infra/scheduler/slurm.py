@@ -75,7 +75,7 @@ class SlurmScheduler(Scheduler):
         cluster_name: str | None = None,
         container_type: str = "none",
         container_mounts: str | None = None,
-        srun_additional_args: str = "--unbuffered --mpi=pmi2 -K --chdir $PWD",
+        srun_additional_args: str = "--overcommit --unbuffered --mpi=pmi2 -K --chdir $PWD",
         startup_timeout: float = 300.0,
         health_check_interval: float = 5.0,
         enable_tms_offload: bool | None = None,
@@ -719,6 +719,7 @@ class SlurmScheduler(Scheduler):
         schedulings: list[SchedulingSpec],
         nodelist: str | None,
         exclude: str | None,
+        runtime: str | None,
     ) -> str:
         """Generate sbatch script for worker job with single srun command."""
         ntasks_per_node = replicas // nodes if nodes > 0 else replicas
@@ -747,6 +748,8 @@ class SlurmScheduler(Scheduler):
             sbatch_options.append(f"--nodelist={nodelist}")
         if exclude:
             sbatch_options.append(f"--exclude={exclude}")
+        if runtime:
+            sbatch_options.append(f"--time={runtime}")
 
         sbatch_options_str = "\n".join([f"#SBATCH {opt}" for opt in sbatch_options])
 
@@ -833,7 +836,7 @@ class SlurmScheduler(Scheduler):
 
         # Build srun command with streaming log pipeline
         srun_cmd = (
-            f"srun {self.srun_additional_args} {' '.join(srun_flags)} {final_cmd}"
+            f"srun {spec.srun_additional_args} {' '.join(srun_flags)} {final_cmd}"
         )
         log_pipeline = build_streaming_log_cmd(srun_cmd, role_log, merged_log, role)
 
@@ -961,6 +964,7 @@ class SlurmScheduler(Scheduler):
             schedulings=schedulings,
             nodelist=nodelist,
             exclude=spec.exclude,
+            runtime=spec.runtime,
         )
 
         # Write and submit sbatch script

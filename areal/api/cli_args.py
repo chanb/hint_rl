@@ -881,6 +881,9 @@ class SchedulingSpec:
     exclude: str | None = field(
         default=None, metadata={"help": "sbatch/srun's `--exclude` option for slurm."}
     )
+    runtime: str | None = field(
+        default=None, metadata={"help": "sbatch/srun's `--time` option for slurm."}
+    )
     ray_placement_strategy: str = field(
         default="shared",
         metadata={
