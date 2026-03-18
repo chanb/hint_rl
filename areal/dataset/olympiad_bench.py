@@ -11,7 +11,7 @@ def get_olympiad_bench_rl_dataset(
     tokenizer,
     max_length: int | None = None,
 ):
-    dataset = load_dataset(path=path, split=split)
+    dataset = load_dataset(path="lmms-lab/OlympiadBench", split="test_en")
 
     def process(sample):
         messages = [
@@ -21,12 +21,12 @@ def get_olympiad_bench_rl_dataset(
             },
             {
                 "role": "user",
-                "content": sample["problem"]
+                "content": sample["question"]
             }
         ]
         return {"messages": messages}
 
-    dataset = dataset.map(process).remove_columns(["problem"])
+    dataset = dataset.map(process).remove_columns(["question"])
 
     # Filter out sequences longer than max_length if tokenizer and max_length are provided
     if max_length is not None:
@@ -48,8 +48,7 @@ def get_aime25_rl_dataset(
     tokenizer,
     max_length: int | None = None,
 ):
-    dataset = load_dataset(path=path, split=split)
-    dataset = dataset.filter(lambda x: "AIME" in x["source"] and "2025" in x["source"])
+    dataset = load_dataset(path="math-ai/aime25", split="test")
 
     def process(sample):
         messages = [
@@ -86,8 +85,7 @@ def get_aime24_rl_dataset(
     tokenizer,
     max_length: int | None = None,
 ):
-    dataset = load_dataset(path=path, split=split)
-    dataset = dataset.filter(lambda x: "AIME" in x["source"] and "2024" in x["source"])
+    dataset = load_dataset(path="HuggingFaceH4/aime_2024", split="train")
 
     def process(sample):
         messages = [
@@ -102,7 +100,7 @@ def get_aime24_rl_dataset(
         ]
         return {"messages": messages}
 
-    dataset = dataset.map(process).remove_columns(["problem"])
+    dataset = dataset.map(process).remove_columns(["problem", "solution"])
 
     # Filter out sequences longer than max_length if tokenizer and max_length are provided
     if max_length is not None:

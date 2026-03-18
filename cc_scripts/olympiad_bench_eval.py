@@ -35,7 +35,7 @@ def main(args):
 
     # Load evaluation dataset
     valid_dataset = get_custom_dataset(
-        split="test", dataset_config=config.valid_dataset, tokenizer=tokenizer
+        split="test_en", dataset_config=config.valid_dataset, tokenizer=tokenizer
     )
     valid_dataloader = create_dataloader(
         valid_dataset,
@@ -43,6 +43,7 @@ def main(args):
         world_size=1,
         dataset_config=config.valid_dataset,
     )
+    assert len(valid_dataloader) > 0
 
     # Initialize RolloutController
     config.rollout.max_head_offpolicyness = int(1e12)

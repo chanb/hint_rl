@@ -64,9 +64,9 @@ def _get_custom_dataset(
             **kwargs,
         )
     elif "aime24" in path and type == "rl":
-        from .olympiad_bench import get_aime24_rl_dataaset
+        from .olympiad_bench import get_aime24_rl_dataset
 
-        return get_aime24_rl_dataaset(
+        return get_aime24_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,
@@ -74,9 +74,9 @@ def _get_custom_dataset(
             **kwargs,
         )
     elif "aime25" in path and type == "rl":
-        from .olympiad_bench import get_aime25_rl_dataaset
+        from .olympiad_bench import get_aime25_rl_dataset
 
-        return get_aime25_rl_dataaset(
+        return get_aime25_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,
@@ -84,9 +84,9 @@ def _get_custom_dataset(
             **kwargs,
         )
     elif "olympiad_bench" in path and type == "rl":
-        from .olympiad_bench import get_olympiad_bench_rl_dataaset
+        from .olympiad_bench import get_olympiad_bench_rl_dataset
 
-        return get_olympiad_bench_rl_dataaset(
+        return get_olympiad_bench_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,
