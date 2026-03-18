@@ -16,6 +16,9 @@ VALID_DATASETS = [
     "hh-rlhf",
     "torl_data",
     "questa",
+    "aime24",
+    "aime25",
+    "olympiad_bench",
 ]
 
 logger = logging.getLogger("Dataset")
@@ -54,6 +57,36 @@ def _get_custom_dataset(
         from .gsm8k import get_openmath_rl_dataset
 
         return get_openmath_rl_dataset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "aime24" in path and type == "rl":
+        from .olympiad_bench import get_aime24_rl_dataaset
+
+        return get_aime24_rl_dataaset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "aime25" in path and type == "rl":
+        from .olympiad_bench import get_aime25_rl_dataaset
+
+        return get_aime25_rl_dataaset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "olympiad_bench" in path and type == "rl":
+        from .olympiad_bench import get_olympiad_bench_rl_dataaset
+
+        return get_olympiad_bench_rl_dataaset(
             path=path,
             split=split,
             tokenizer=tokenizer,
