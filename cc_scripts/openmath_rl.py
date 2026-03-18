@@ -16,20 +16,26 @@ def main(args):
         dataset_config=config.train_dataset,
         tokenizer=tokenizer,
     )
-    valid_dataset = get_custom_dataset(
-        split="test",
-        dataset_config=config.valid_dataset,
-        tokenizer=tokenizer,
-    )
-
     workflow_kwargs = dict(
         reward_fn="areal.reward.gsm8k.gsm8k_reward_fn",
         gconfig=config.gconfig,
         tokenizer=config.tokenizer_path,
         enable_thinking=False,
     )
-    eval_workflow_kwargs = workflow_kwargs.copy()
-    eval_workflow_kwargs["gconfig"] = config.gconfig.new(temperature=0.6)
+
+    valid_dataset = None
+    eval_workflow = None
+    eval_workflow_kwargs = None
+    if config.valid_dataset is not None:
+        valid_dataset = get_custom_dataset(
+            split="test",
+            dataset_config=config.valid_dataset,
+            tokenizer=tokenizer,
+        )
+
+        eval_workflow = "areal.workflow.rlvr.RLVRWorkflow"
+        eval_workflow_kwargs = workflow_kwargs.copy()
+        eval_workflow_kwargs["gconfig"] = config.gconfig.new(temperature=0.6)
 
     if config.ratio_curriculum is None:
         with PPOTrainer(
@@ -40,7 +46,7 @@ def main(args):
             trainer.train(
                 workflow="areal.workflow.rlvr.RLVRWorkflow",
                 workflow_kwargs=workflow_kwargs,
-                eval_workflow="areal.workflow.rlvr.RLVRWorkflow",
+                eval_workflow=eval_workflow,
                 eval_workflow_kwargs=eval_workflow_kwargs,
                 dynamic_filter_fn=filter_always_fail_pass,
             )

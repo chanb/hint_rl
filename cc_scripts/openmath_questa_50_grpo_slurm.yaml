@@ -1,5 +1,5 @@
 experiment_name: openmath-dapo
-trial_name: dist_training-questa_50-bs_16-n_samples_4-max_new_token_12000
+trial_name: dist_training-no_eval-questa_50-bs_16-n_samples_4-max_new_token_12000
 
 seed: 1
 enable_offload: false
@@ -31,8 +31,8 @@ rollout:
     - task_type: worker
       port_count: 2
       gpu: 1
-      cpu: 1
-      mem: 8
+      cpu: 2
+      mem: 16
       cmd: python -m areal.infra.rpc.rpc_server
       env_vars: {}
       runtime: "48:00:00"
@@ -95,8 +95,8 @@ actor:
     - task_type: worker
       port_count: 2
       gpu: 1
-      cpu: 1
-      mem: 4
+      cpu: 2
+      mem: 8
       cmd: python -m areal.infra.rpc.rpc_server
       runtime: "48:00:00"
       env_vars: {}
@@ -130,7 +130,7 @@ sglang:
   dtype: ${actor.dtype}
   max_running_requests: null
   context_length: 32768
-  mem_fraction_static: 0.9
+  mem_fraction_static: 0.8
 
 vllm:
   model: ${actor.path}
@@ -150,20 +150,21 @@ train_dataset:
   type: rl
   max_length: 4096
 
-valid_dataset:
-  batch_size: 4
-  pin_memory: true
-  num_workers: 4
-  path: /home/chanb/scratch/datasets/questa/openr1_50
-  type: rl
+valid_dataset: null
+# valid_dataset:
+#   batch_size: 4
+#   pin_memory: true
+#   num_workers: 4
+#   path: /home/chanb/scratch/datasets/questa/openr1_50
+#   type: rl
 
 # Utilities
 saver:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
-  freq_epochs: 1
-  freq_steps: null
+  freq_epochs: null
+  freq_steps: 25
   freq_secs: null
 
 recover:
@@ -179,7 +180,7 @@ evaluator:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
-  freq_epochs: 1
+  freq_epochs: null
   freq_steps: null
   freq_secs: null
 
