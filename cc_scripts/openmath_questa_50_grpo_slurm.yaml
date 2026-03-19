@@ -35,7 +35,7 @@ rollout:
       mem: 16
       cmd: python -m areal.infra.rpc.rpc_server
       env_vars: {}
-      runtime: "48:00:00"
+      runtime: "12:00:00"
       srun_additional_args: --unbuffered --mpi=pmi2 -K --chdir $PWD
       additional_bash_cmds:
         - module load StdEnv/2023
@@ -95,10 +95,10 @@ actor:
     - task_type: worker
       port_count: 2
       gpu: 1
-      cpu: 2
-      mem: 8
+      cpu: 1
+      mem: 16
       cmd: python -m areal.infra.rpc.rpc_server
-      runtime: "48:00:00"
+      runtime: "12:00:00"
       env_vars: {}
       srun_additional_args: --overcommit --unbuffered --mpi=pmi2 -K --chdir $PWD
       additional_bash_cmds:
