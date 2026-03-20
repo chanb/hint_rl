@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --account=aip-schuurma
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --mem=100GB
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:l40s:4
-#SBATCH --array=1-1
+#SBATCH --array=1-4
 #SBATCH --output=/home/chanb/scratch/logs/hint_rl/%j.out
 
 module load StdEnv/2023
