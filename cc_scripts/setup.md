@@ -75,6 +75,9 @@ python convert2hf.py
 ```
 
 Pretrained models:
-Qwen 1.5B: `deepseek-ai/DeepSeek-R1-Distill-1.5B`
+Qwen 1.5B: `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B`
 Default Nemotron: `nvidia/OpenMath-Nemotron-1.5B`
-From paper: `QuestA/QuestA-Nemotron-1.5B`
+From paper: `foreverlasting1202/QuestA-Nemotron-1.5B`
+
+
+model = AutoModelForCausalLM.from_pretrained("agentica-org/DeepScaleR-1.5B-Preview", dtype="auto", device_map="auto")
