@@ -91,7 +91,7 @@ train_dataset:
   max_length: 4096
   
 valid_dataset:
-  batch_size: 32
+  batch_size: 1
   pin_memory: true
   num_workers: 4
   # path: questa_with_hint

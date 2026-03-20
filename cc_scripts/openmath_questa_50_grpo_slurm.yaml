@@ -146,7 +146,7 @@ train_dataset:
   shuffle: true
   pin_memory: true
   num_workers: 4
-  path: /home/chanb/scratch/datasets/questa/openr1_50
+  path: /home/chanb/scratch/datasets/questa/data/openr1_50
   type: rl
   max_length: 4096
 
@@ -155,7 +155,7 @@ valid_dataset: null
 #   batch_size: 4
 #   pin_memory: true
 #   num_workers: 4
-#   path: /home/chanb/scratch/datasets/questa/openr1_50
+#   path: /home/chanb/scratch/datasets/questa/data/openr1_50
 #   type: rl
 
 # Utilities

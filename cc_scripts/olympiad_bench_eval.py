@@ -94,7 +94,9 @@ def main(args):
                     group_size=config.gconfig.n_samples,
                 )
                 cnt += 1
-
+        print(len(valid_dataset))
+        print(len(valid_dataloader))
+        print(cnt)
         eval_rollout.wait(cnt, timeout=None)
         eval_stats = eval_rollout.export_stats()
 

@@ -1,4 +1,4 @@
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 
 
 def get_gsm8k_sft_dataset(
@@ -66,7 +66,7 @@ def get_openmath_rl_dataset(
     tokenizer,
     max_length: int | None = None,
 ):
-    dataset = load_dataset(path=path, name="default", split=split)
+    dataset = load_from_disk(path)[split]
 
     def process(sample):
         messages = [

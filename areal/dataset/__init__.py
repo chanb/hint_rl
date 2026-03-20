@@ -59,11 +59,11 @@ def _get_custom_dataset(
         from .gsm8k import get_openmath_rl_dataset
 
         if path == "questa_with_hint":
-            path = "/home/chanb/scratch/datasets/questa/openr1_50"
+            path = "/home/chanb/scratch/datasets/questa/data/openr1_50"
             split = "train"
         elif path == "questa_no_hint":
             split = "test"
-            path = "/home/chanb/scratch/datasets/questa/openr1_50"
+            path = "/home/chanb/scratch/datasets/questa/data/openr1_50"
 
         return get_openmath_rl_dataset(
             path=path,
