@@ -4,7 +4,7 @@
 #SBATCH --mem=100GB
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:l40s:4
-#SBATCH --array=1-10
+#SBATCH --array=1-8
 #SBATCH --output=/home/chanb/scratch/logs/hint_rl/%j.out
 
 module load StdEnv/2023
