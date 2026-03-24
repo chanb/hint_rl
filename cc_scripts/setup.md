@@ -46,6 +46,9 @@ python <PATH_TO>/hint_rl/cc_scripts/openmath_rl.py --config <PATH_TO>/hint_rl/cc
 Run with `uv`:
 ```
 python <PATH_TO>/hint_rl/cc_scripts/olympiad_bench_eval.py --config <PATH_TO>/hint_rl/cc_scripts/eval-questa_50.yaml
+
+# Slurm
+dat_file=<PATH_TO>/eval_configs.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_questa.sh
 ```
 
 ### Tensorboard
