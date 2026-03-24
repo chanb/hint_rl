@@ -10,8 +10,8 @@ wait_for_job_to_start() {
   while true; do
     local state=$(squeue -j "$job_id" -h -o "%T" 2>/dev/null)
     if [[ "$state" == "RUNNING" ]]; then
-      echo "Job $job_id is running. Waiting 20 seconds before next submission..."
-      sleep 20
+      echo "Job $job_id is running. Waiting 30 seconds before next submission..."
+      sleep 30
       break
     elif [[ -z "$state" ]]; then
       echo "Job $job_id not found in queue (may have finished already). Proceeding..."
