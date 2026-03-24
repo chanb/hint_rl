@@ -35,7 +35,7 @@ def main(args):
 
     # Load evaluation dataset
     valid_dataset = get_custom_dataset(
-        split="test", dataset_config=config.valid_dataset, tokenizer=tokenizer
+        split=config.valid_dataset.split, dataset_config=config.valid_dataset, tokenizer=tokenizer
     )
     valid_dataloader = create_dataloader(
         valid_dataset,

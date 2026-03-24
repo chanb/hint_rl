@@ -1,8 +1,5 @@
 experiment_name: openmath-dapo
-# trial_name: local_eval-questa_no_hint-trained_344_steps
-# trial_name: local_eval-questa_with_hint-trained_344_steps
-trial_name: local_eval-questa_no_hint
-# trial_name: local_eval-questa_with_hint
+trial_name: test_local-eval
 
 seed: 1
 enable_offload: false
@@ -17,7 +14,7 @@ cluster:
     type: nfs
     nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
 
-allocation_mode: sglang:d4p1t1
+allocation_mode: sglang:d1p1t1
 
 scheduler:
   type: local
@@ -25,7 +22,7 @@ scheduler:
 rollout:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  max_concurrent_rollouts: 64
+  max_concurrent_rollouts: 8
   queue_size: null
   consumer_batch_size: ${valid_dataset.batch_size}
   scheduling_spec: ${actor.scheduling_spec}
@@ -43,7 +40,6 @@ gconfig:
 actor:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  # path: /home/chanb/scratch/hint_rl_results/checkpoints/chanb/openmath-dapo/dist_training-questa_50-bs_16-n_samples_4-max_new_token_12000/default/epoch2epochstep114globalstep344
   path: nvidia/OpenMath-Nemotron-1.5B
   init_from_scratch: false
   dtype: bfloat16
@@ -89,15 +85,16 @@ train_dataset:
   path: /home/chanb/scratch/datasets/questa/openr1_50
   type: rl
   max_length: 4096
+  split: train
   
 valid_dataset:
   batch_size: 1
   pin_memory: true
   num_workers: 4
-  # path: questa_with_hint
-  path: questa_no_hint
+  path: test_local
   type: rl
   max_length: 4096
+  split: train
 
 
 # Utilities

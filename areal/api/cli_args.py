@@ -2052,6 +2052,9 @@ class _DatasetConfig:
             "help": "Maximum token length of sequences in dataset. Longer sequences are filtered out."
         },
     )
+    split: str = field(
+        default=MISSING, metadata={"help": "The split of the dataset to load"}
+    )
 
 
 @dataclass

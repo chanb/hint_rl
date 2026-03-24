@@ -1,27 +1,3 @@
-To build apptainer for CC:
-```
-module load StdEnv/2023
-module load python/3.10.13
-module load cuda/12.9
-module load apptainer/1.4.5
-export APPTAINER_CACHEDIR=~/scratch
-apptainer build ~/scratch/questa.sif docker://ghcr.io/inclusionai/areal-runtime:v1.0.1
-```
-
-Run the apptainer interactively:
-```
-module load StdEnv/2023
-module load python/3.10.13
-module load cuda/12.9
-module load apptainer/1.4.5
-
-apptainer run --nv -C -W $SLURM_TMPDIR -B ~/research/hint_rl:/workspace -B ~/scratch/datasets:/datasets -B ~/scratch/hint_rl_results:/hint_rl_results --writable-tmpfs ~/scratch/questa.sif
-
-cd /workspace/hint_rl
-uv pip install --no-deps -e .
-uv pip install ipdb
-```
-
 Run code:
 ```
 # Local scheduler
@@ -56,7 +32,7 @@ Compute node $: tensorboard --logdir=. --host 0.0.0.0 --load_fast false
 Local $: ssh -N -f -L localhost:6007:<node_name>:6006 <username>@vulcan.alliancecan.ca
 ```
 
-Process data (within apptainer) as mentioned in paper:
+Process data as mentioned in paper:
 ```
 mkdir -p /datasets/questa/data/
 
@@ -80,4 +56,27 @@ Default Nemotron: `nvidia/OpenMath-Nemotron-1.5B`
 From paper: `foreverlasting1202/QuestA-Nemotron-1.5B`
 
 
-model = AutoModelForCausalLM.from_pretrained("agentica-org/DeepScaleR-1.5B-Preview", dtype="auto", device_map="auto")
+### OLD SETUP WITH APPTAINER
+To build apptainer for CC:
+```
+module load StdEnv/2023
+module load python/3.10.13
+module load cuda/12.9
+module load apptainer/1.4.5
+export APPTAINER_CACHEDIR=~/scratch
+apptainer build ~/scratch/questa.sif docker://ghcr.io/inclusionai/areal-runtime:v1.0.1
+```
+
+Run the apptainer interactively:
+```
+module load StdEnv/2023
+module load python/3.10.13
+module load cuda/12.9
+module load apptainer/1.4.5
+
+apptainer run --nv -C -W $SLURM_TMPDIR -B ~/research/hint_rl:/workspace -B ~/scratch/datasets:/datasets -B ~/scratch/hint_rl_results:/hint_rl_results --writable-tmpfs ~/scratch/questa.sif
+
+cd /workspace/hint_rl
+uv pip install --no-deps -e .
+uv pip install ipdb
+```
