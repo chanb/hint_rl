@@ -1,5 +1,5 @@
 experiment_name: openmath-dapo
-trial_name: dist_training-no_eval-questa_50-bs_16-n_samples_4-max_new_token_12000
+trial_name: dist_training-test_hyperparam
 
 seed: 1
 enable_offload: false
@@ -14,7 +14,7 @@ cluster:
     type: nfs
     nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
 
-allocation_mode: sglang:d4p1t1+d4p1t1
+allocation_mode: sglang:d2p1t2+fsdp:d4
 
 scheduler:
   type: slurm
@@ -35,7 +35,7 @@ rollout:
       mem: 16
       cmd: python -m areal.infra.rpc.rpc_server
       env_vars: {}
-      runtime: "12:00:00"
+      runtime: "02:00:00"
       srun_additional_args: --unbuffered --mpi=pmi2 -K --chdir $PWD
       additional_bash_cmds:
         - module load StdEnv/2023
@@ -98,7 +98,7 @@ actor:
       cpu: 1
       mem: 16
       cmd: python -m areal.infra.rpc.rpc_server
-      runtime: "12:00:00"
+      runtime: "02:00:00"
       env_vars: {}
       srun_additional_args: --overcommit --unbuffered --mpi=pmi2 -K --chdir $PWD
       additional_bash_cmds:
@@ -142,12 +142,13 @@ vllm:
 
 # datasets
 train_dataset:
-  batch_size: 32
+  batch_size: 128
   shuffle: true
   pin_memory: true
   num_workers: 4
   path: /home/chanb/scratch/datasets/questa/data/openr1_50
   type: rl
+  split: train
   max_length: 4096
 
 valid_dataset: null
