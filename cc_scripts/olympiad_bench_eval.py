@@ -1,3 +1,4 @@
+import os
 import sys
 
 from areal.api import AllocationMode
@@ -9,6 +10,7 @@ from areal.utils import logging, seeding
 from areal.utils.dataloader import create_dataloader
 from areal.utils.hf_utils import load_hf_tokenizer
 from areal.utils.printing import tabulate_stats
+from areal.utils.stats_logger import StatsLogger
 
 logger = logging.getLogger("GSM8KEval")
 
@@ -35,7 +37,7 @@ def main(args):
 
     # Load evaluation dataset
     valid_dataset = get_custom_dataset(
-        split="test", dataset_config=config.valid_dataset, tokenizer=tokenizer
+        split=config.valid_dataset.split, dataset_config=config.valid_dataset, tokenizer=tokenizer
     )
     valid_dataloader = create_dataloader(
         valid_dataset,
@@ -83,21 +85,37 @@ def main(args):
             enable_thinking=False,
         )
 
+        rollout_dir = os.path.join(
+            StatsLogger.get_log_path(
+                experiment_name=config.experiment_name,
+                trial_name=config.trial_name,
+                fileroot=config.cluster.fileroot,
+            ),
+            "rollout",
+            "0"
+        )
+
         # Submit all evaluation tasks
         cnt = 0
+        run_cnt = 0
         for data in valid_dataloader:
             for item in data:
-                eval_rollout.submit(
-                    item,
-                    workflow=workflow,
-                    workflow_kwargs=workflow_kwargs,
-                    group_size=config.gconfig.n_samples,
-                )
+                if os.path.isfile(f"{rollout_dir}/{cnt}.jsonl"):
+                    logger.info(f"Skipping {cnt}")
+                else:
+                    eval_rollout.submit(
+                        item,
+                        workflow=workflow,
+                        workflow_kwargs=workflow_kwargs,
+                        group_size=config.gconfig.n_samples,
+                        task_id=cnt,
+                    )
+                    run_cnt += 1
                 cnt += 1
         print(len(valid_dataset))
         print(len(valid_dataloader))
-        print(cnt)
-        eval_rollout.wait(cnt, timeout=None)
+        print(cnt, run_cnt)
+        eval_rollout.wait(run_cnt, timeout=None)
         eval_stats = eval_rollout.export_stats()
 
         # Print and log results
