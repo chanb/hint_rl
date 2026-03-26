@@ -132,14 +132,11 @@ train_dataset:
   num_workers: 4
   path: /home/chanb/scratch/datasets/questa/data/openr1_50
   type: rl
+  split: train
   max_length: 4096
 
 valid_dataset:
-  batch_size: 4
-  pin_memory: true
-  num_workers: 4
-  path: /home/chanb/scratch/datasets/questa/data/openr1_50
-  type: rl
+  null
 
 # Utilities
 saver:
