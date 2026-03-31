@@ -1,5 +1,5 @@
 experiment_name: openmath-dapo
-trial_name: local_test-hint_rl
+trial_name: local_test-hint_rl-more_gpus
 
 seed: 1
 enable_offload: false
@@ -14,7 +14,7 @@ cluster:
     type: nfs
     nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
 
-allocation_mode: sglang:d1p1t1+d1p1t1
+allocation_mode: sglang:d3p1t1+d1p1t1
 
 scheduler:
   type: local
@@ -26,8 +26,8 @@ dynamic_hint:
 rollout:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  max_concurrent_rollouts: 128
-  queue_size: 256
+  max_concurrent_rollouts: 72
+  queue_size: 128
   consumer_batch_size: ${train_dataset.batch_size}
   max_head_offpolicyness: 2
   enable_rollout_tracing: false
