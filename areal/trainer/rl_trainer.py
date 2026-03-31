@@ -6,6 +6,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
+import torch
 import torch.distributed as dist
 from datasets import Dataset
 from torchdata.stateful_dataloader import StatefulDataLoader
@@ -1060,7 +1061,7 @@ class CurriculumPPOTrainer(PPOTrainer):
         elif self._requires_proxy_workflow(workflow):
             self._ensure_proxy_started()
 
-        ratio_curriculum = config.ratio_curriculum
+        dynamic_hint = config.dynamic_hint
 
         for global_step in range(start_step, max_steps):
             if (
@@ -1091,6 +1092,27 @@ class CurriculumPPOTrainer(PPOTrainer):
                     group_size=config.gconfig.n_samples,
                     dynamic_bs=self.config.dynamic_bs,
                 )
+                ids = rollout_batch["id"].to_local()
+                rewards = rollout_batch["rewards"].to_local()
+                modified = False
+                for sample_id in torch.unique(ids):
+                    curr_id = int(sample_id)
+                    workflow_kwargs["hint_percentage"].setdefault(curr_id, 1.0)
+                    success_rate = torch.mean(rewards[ids == sample_id])
+                    if success_rate > config.dynamic_hint.goldilock_zone[1]:
+                        workflow_kwargs["hint_percentage"][curr_id] = max(
+                            workflow_kwargs["hint_percentage"][curr_id] - config.dynamic_hint.hint_delta,
+                            0.0,
+                        )
+                        modified = True
+                    elif success_rate < config.dynamic_hint.goldilock_zone[0]:
+                        workflow_kwargs["hint_percentage"][curr_id] = min(
+                            workflow_kwargs["hint_percentage"][curr_id] + config.dynamic_hint.hint_delta,
+                            1.0,
+                        )
+                        modified = True
+                if modified:
+                    logger.info(f"Updated hint percentages: {workflow_kwargs['hint_percentage']}")
 
             if self.critic is not None:
                 with (

@@ -32,6 +32,17 @@ cd <PATH_TO>/hint_rl/cc_scripts/datasets
 code_path=<PATH_TO>/hint_rl dataset_path=<PATH_TO>/datasets/questa ./make_hint_sweep.sh
 ```
 
+#### Hint RL dataset
+```
+export dataset_path=<PATH_TO>/datasets/questa
+
+cd <PATH_TO>/hint_rl/cc_scripts/datasets
+
+python create_hint_dataset.py --data_path=${dataset_path}/OpenR1-50-0-4.jsonl --out_path=${dataset_path}/data/OpenR1-hint_sep.jsonl
+python process.py --input=${dataset_path}/data/OpenR1-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
+python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/openr1_hint_sep
+```
+
 ### Run training
 Run with `uv`:
 ```

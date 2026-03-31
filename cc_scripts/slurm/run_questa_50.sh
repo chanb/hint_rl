@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=aip-schuurma
-#SBATCH --time=24:00:00
+#SBATCH --time=3:00:00
 #SBATCH --mem=8GB
 #SBATCH --cpus-per-task=1
 #SBATCH --array=1-1

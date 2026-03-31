@@ -2188,6 +2188,20 @@ class TeacherConfig(PPOActorConfig):
 
 
 @dataclass
+class DynamicHintConfig:
+    """Configuration for dynamic hint conditioning in PPO training."""
+
+    goldilock_zone: list[float] = field(
+        default_factory=list,
+        metadata={"help": "The range [p_1, p_2] to determine when to change the hint %."},
+    )
+    hint_delta: float = field(
+        default=0.0,
+        metadata={"help": "The amount of hint percentage change when the reward is outside the goldilock zone."},
+    )
+
+
+@dataclass
 class PPOConfig(BaseExperimentConfig):
     """Configuration for Proximal Policy Optimization (PPO) reinforcement learning experiments."""
 
@@ -2223,7 +2237,7 @@ class PPOConfig(BaseExperimentConfig):
             "This results in variable-sized batches of valid data."
         },
     )
-    ratio_curriculum: float | None = field(
+    dynamic_hint: DynamicHintConfig | None = field(
         default=None,
         metadata={
             "help": "Enable dynamic partial hint conditioning on sample"

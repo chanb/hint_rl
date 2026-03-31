@@ -14,5 +14,10 @@ if __name__ == "__main__":
             new_data = {}
             new_data['question'] = data['prompt']
             new_data['answer'] = data['solutions']
+            new_data['id'] = data['query_id']
+
+            if 'hint' in data:
+                new_data['hint'] = data['hint']
+
             with open(args.output, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(new_data, ensure_ascii=False) + '\n')

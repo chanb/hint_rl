@@ -37,7 +37,8 @@ def main(args):
         eval_workflow_kwargs = workflow_kwargs.copy()
         eval_workflow_kwargs["gconfig"] = config.gconfig.new(temperature=0.6)
 
-    if config.ratio_curriculum is None:
+    if config.dynamic_hint is None:
+        print("Using PPOTrainer.")
         with PPOTrainer(
             config,
             train_dataset=train_dataset,
@@ -51,17 +52,22 @@ def main(args):
                 dynamic_filter_fn=filter_always_fail_pass,
             )
     else:
+        print("Using CurriculumPPOTrainer with dynamic hint generation.")
+        hint_percentage = dict()
+        workflow_kwargs["hint_percentage"] = hint_percentage
+        print(workflow_kwargs)
+
         with CurriculumPPOTrainer(
             config,
             train_dataset=train_dataset,
             valid_dataset=valid_dataset,
         ) as trainer:
             trainer.train(
-                workflow="areal.workflow.rlvr.RLVRWorkflow",
+                workflow="areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow",
                 workflow_kwargs=workflow_kwargs,
-                eval_workflow="areal.workflow.rlvr.RLVRWorkflow",
+                eval_workflow=eval_workflow,
                 eval_workflow_kwargs=eval_workflow_kwargs,
-                dynamic_filter_fn=dynamic_filter_fn,
+                dynamic_filter_fn=filter_always_fail_pass,
             )
 
 
