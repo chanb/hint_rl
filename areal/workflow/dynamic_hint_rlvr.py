@@ -54,7 +54,11 @@ def split_prefix(text, scale):
 def make_data_extract_prompt_fn(hint_percentage: dict[str, Any]) -> Callable[[dict[str, Any]], Any]:
     def data_extract_prompt_fn(data: dict[str, Any]) -> Any:
         messages = data["messages"]
-        if "hint" in data and hint_percentage.get(data["id"], 1.0) > 0.0:
+        if (
+            "## Hint." not in messages[0]["content"]
+            and "hint" in data
+            and hint_percentage.get(data["id"], 1.0) > 0.0
+        ):
             prefix, _ = split_prefix(data["hint"], hint_percentage.get(data["id"], 1.0))
             messages[0]["content"] = (
                 messages[0]["content"].split(
