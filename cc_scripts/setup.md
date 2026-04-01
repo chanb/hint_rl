@@ -20,7 +20,8 @@ uv sync --extra cuda
 source <PATH_TO>/hint_rl/.venv/bin/activate
 ```
 
-### Dataset
+### Datasets
+#### QuestA datasets
 The `jsonl` files are stored in [here](https://huggingface.co/datasets/foreverlasting1202/QuestA/tree/main).
 The `make_hint_sweep.sh` file will create datasets with hints from 0% to 100%, with 10% increments, stored in `<PATH_TO>/datasets/questa/data/`:
 ```
@@ -31,8 +32,10 @@ wget https://huggingface.co/datasets/foreverlasting1202/QuestA/resolve/main/Open
 cd <PATH_TO>/hint_rl/cc_scripts/datasets
 code_path=<PATH_TO>/hint_rl dataset_path=<PATH_TO>/datasets/questa ./make_hint_sweep.sh
 ```
+NOTE: The QuestA datasets use 25% and 50% hints, you may change the script accordingly.
 
 #### Hint RL dataset
+Rather than fixing a particular %, we store the hints in a separate column and dynamically provide hints in training:
 ```
 export dataset_path=<PATH_TO>/datasets/questa
 
@@ -53,6 +56,12 @@ python <PATH_TO>/hint_rl/cc_scripts/openmath_rl.py --config <PATH_TO>/hint_rl/cc
 python <PATH_TO>/hint_rl/cc_scripts/openmath_rl.py --config <PATH_TO>/hint_rl/cc_scripts/openmath_questa_50_grpo_slurm.yaml
 ```
 
+#### Tuning guide
+AReaL provides a [documentation](https://www.inclusion-ai.org/AReaL/en/best_practices/handling_oom.html) on tuning the hyperparameters for memory usage.
+Based on our tuning, `max_concurrent_rollouts` and `allocation_mode` are the most impactful.
+On L40s nodes we can have approximately 28 `max_concurent_rollouts` per GPU.
+The sweet spot on Vulcan seems to be two nodes for rollout and two nodes for training, e.g., `sglang:d2p1t1+fsdp:d2p1t1`.
+
 ### Run evaluations
 Run with `uv`:
 ```
@@ -69,8 +78,11 @@ Compute node $: tensorboard --logdir=. --host 0.0.0.0 --load_fast false
 Local $: ssh -N -f -L localhost:6007:<node_name>:6006 <username>@vulcan.alliancecan.ca
 ```
 
+### Hint RL changes
+We implement dynamic hints by adding `areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow` and `areal.trainer.rl_trainer.CurriculumPPOTrainer`.
+The former adds partial hints based on `hint_percentage` of the question, and the latter keeps track of the `hint_percentage`.
 
-### OLD SETUP WITH APPTAINER
+### (Deprecated) OLD SETUP WITH APPTAINER
 To build apptainer for CC:
 ```
 module load StdEnv/2023
