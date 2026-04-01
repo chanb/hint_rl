@@ -1,5 +1,5 @@
 experiment_name: openmath-dapo
-trial_name: dist_training-test_hyperparam
+trial_name: dist_training-hint_rl
 
 seed: 1
 enable_offload: false
@@ -35,7 +35,7 @@ rollout:
       mem: 16
       cmd: python -m areal.infra.rpc.rpc_server
       env_vars: {}
-      runtime: "02:00:00"
+      runtime: "24:00:00"
       srun_additional_args: --unbuffered --mpi=pmi2 -K --chdir $PWD
       additional_bash_cmds:
         - module load StdEnv/2023
@@ -102,7 +102,7 @@ actor:
       cpu: 1
       mem: 16
       cmd: python -m areal.infra.rpc.rpc_server
-      runtime: "02:00:00"
+      runtime: "24:00:00"
       env_vars: {}
       srun_additional_args: --overcommit --unbuffered --mpi=pmi2 -K --chdir $PWD
       additional_bash_cmds:

@@ -136,7 +136,7 @@ dependencies = [
 # CUDA-dependent extras - these packages only have Linux x86_64 wheels
 # Platform markers ensure they're skipped on unsupported platforms
 sglang = [
-    "sglang[tracing]==0.5.7; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sglang[tracing]==0.5.9; sys_platform == 'linux' and platform_machine == 'x86_64'",
 ]
 vllm = [
     "vllm==0.14.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
