@@ -6,6 +6,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
+import json
 import torch
 import torch.distributed as dist
 from datasets import Dataset
@@ -1061,8 +1062,6 @@ class CurriculumPPOTrainer(PPOTrainer):
         elif self._requires_proxy_workflow(workflow):
             self._ensure_proxy_started()
 
-        dynamic_hint = config.dynamic_hint
-
         for global_step in range(start_step, max_steps):
             if (
                 config.total_train_steps is not None
@@ -1239,6 +1238,22 @@ class CurriculumPPOTrainer(PPOTrainer):
                 ),
             ):
                 self._save_hf(epoch=epoch, epoch_step=step, global_step=global_step)
+                if self.saver.freq_ctl.check(
+                    epochs=int(step == self.saver.ft_spec.steps_per_epoch - 1), steps=1
+                ):
+                    save_path = Saver.get_model_save_path(
+                        self.config.experiment_name,
+                        self.config.trial_name,
+                        self.config.fileroot,
+                        epoch,
+                        step,
+                        global_step,
+                    )
+
+                    json.dump(
+                        workflow_kwargs['hint_percentage'],
+                        open(os.path.join(save_path, "hint_percentage.json"), "w+"),
+                    )
 
             with (
                 stats_tracker.record_timing("checkpoint_for_recover"),

@@ -1,3 +1,5 @@
+import json
+import os
 import sys
 
 from areal import PPOTrainer, CurriculumPPOTrainer
@@ -53,7 +55,13 @@ def main(args):
             )
     else:
         print("Using CurriculumPPOTrainer with dynamic hint generation.")
-        hint_percentage = dict()
+
+        hint_percentage_path = os.path.join(config.actor.path, "hint_percentage.json")
+        if os.path.isfile(hint_percentage_path):
+            with open(hint_percentage_path, "r") as f:
+                hint_percentage = json.load(f)
+        else:
+            hint_percentage = dict()
         workflow_kwargs["hint_percentage"] = hint_percentage
         print(workflow_kwargs)
 
