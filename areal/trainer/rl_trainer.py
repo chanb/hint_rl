@@ -1244,7 +1244,7 @@ class CurriculumPPOTrainer(PPOTrainer):
                     save_path = Saver.get_model_save_path(
                         self.config.experiment_name,
                         self.config.trial_name,
-                        self.config.fileroot,
+                        self.config.cluster.fileroot,
                         epoch,
                         step,
                         global_step,
