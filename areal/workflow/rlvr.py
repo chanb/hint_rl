@@ -171,5 +171,6 @@ class RLVRWorkflow(RolloutWorkflow):
             "versions": torch.tensor(versions, dtype=torch.int32),
             "attention_mask": torch.ones(len(seq), dtype=torch.bool),
             "rewards": torch.tensor(reward, dtype=torch.float32),
+            "id": torch.tensor(int(data["id"]), dtype=torch.int32) if "id" in data else torch.tensor(-1, dtype=torch.int32),
         }
         return {k: v.unsqueeze(0) for k, v in res.items()}

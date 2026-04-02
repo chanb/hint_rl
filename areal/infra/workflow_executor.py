@@ -855,6 +855,7 @@ class WorkflowExecutor:
         rewards = traj.get("rewards")
         loss_mask = traj.get("loss_mask")
         attention_mask = traj.get("attention_mask")
+        question_id = traj.get("id")
 
         if (
             input_ids is None
@@ -918,6 +919,7 @@ class WorkflowExecutor:
                     "reward": reward,
                     "prompt": prompt_text,
                     "completion": completion_text,
+                    "question_id": question_id[i].item() if question_id is not None else -1,
                 }
                 await f.write(json.dumps(record) + "\n")
         return True, ""
