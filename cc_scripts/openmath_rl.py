@@ -1,4 +1,4 @@
-import json
+import _pickle as pickle
 import os
 import sys
 
@@ -56,10 +56,10 @@ def main(args):
     else:
         print("Using CurriculumPPOTrainer with dynamic hint generation.")
 
-        hint_percentage_path = os.path.join(config.actor.path, "hint_percentage.json")
+        hint_percentage_path = os.path.join(config.actor.path, "hint_percentage.pkl")
         if os.path.isfile(hint_percentage_path):
-            with open(hint_percentage_path, "r") as f:
-                hint_percentage = json.load(f)
+            with open(hint_percentage_path, "rb") as f:
+                hint_percentage = pickle.load(f)
         else:
             hint_percentage = dict()
         workflow_kwargs["hint_percentage"] = hint_percentage

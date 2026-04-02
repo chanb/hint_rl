@@ -6,7 +6,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
-import json
+import _pickle as pickle
 import torch
 import torch.distributed as dist
 from datasets import Dataset
@@ -1250,9 +1250,9 @@ class CurriculumPPOTrainer(PPOTrainer):
                         global_step,
                     )
 
-                    json.dump(
+                    pickle.dump(
                         workflow_kwargs['hint_percentage'],
-                        open(os.path.join(save_path, "hint_percentage.json"), "w+"),
+                        open(os.path.join(save_path, "hint_percentage.pkl"), "wb"),
                     )
 
             with (
