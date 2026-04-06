@@ -29,6 +29,10 @@ mkdir -p <PATH_TO>/datasets/questa/data/
 cd <PATH_TO>/datasets/questa
 wget https://huggingface.co/datasets/foreverlasting1202/QuestA/resolve/main/OpenR1-50-0-4.jsonl
 
+mkdir -p <PATH_TO>/datasets/apps/data/
+cd <PATH_TO>/datasets/apps
+wget https://huggingface.co/datasets/codeparrot/apps/resolve/main/train.jsonl
+
 cd <PATH_TO>/hint_rl/cc_scripts/datasets
 code_path=<PATH_TO>/hint_rl dataset_path=<PATH_TO>/datasets/questa ./make_hint_sweep.sh
 ```
@@ -37,13 +41,19 @@ NOTE: The QuestA datasets use 25% and 50% hints, you may change the script accor
 #### Hint RL dataset
 Rather than fixing a particular %, we store the hints in a separate column and dynamically provide hints in training:
 ```
-export dataset_path=<PATH_TO>/datasets/questa
-
 cd <PATH_TO>/hint_rl/cc_scripts/datasets
 
-python create_hint_dataset.py --data_path=${dataset_path}/OpenR1-50-0-4.jsonl --out_path=${dataset_path}/data/OpenR1-hint_sep.jsonl
+# Math: Open Math
+export dataset_path=<PATH_TO>/datasets/questa
+python create_hint_dataset_openmath.py --data_path=${dataset_path}/OpenR1-50-0-4.jsonl --out_path=${dataset_path}/data/OpenR1-hint_sep.jsonl
 python process.py --input=${dataset_path}/data/OpenR1-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
 python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/openr1_hint_sep
+
+# Code: Apps
+export dataset_path=<PATH_TO>/datasets/apps
+python create_hint_dataset_apps.py --data_path=${dataset_path}/train.jsonl --out_path=${dataset_path}/data/apps-hint_sep.jsonl
+python process.py --input=${dataset_path}/data/apps-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
+python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/apps_hint_sep
 ```
 
 ### Run training
