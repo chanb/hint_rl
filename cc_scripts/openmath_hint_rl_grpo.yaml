@@ -26,7 +26,7 @@ dynamic_hint:
 rollout:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  max_concurrent_rollouts: 52
+  max_concurrent_rollouts: 48
   queue_size: 128
   consumer_batch_size: ${train_dataset.batch_size}
   max_head_offpolicyness: 2
@@ -147,7 +147,7 @@ saver:
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
   freq_epochs: 1
-  freq_steps: 10
+  freq_steps: 4
   freq_secs: null
 
 recover:

@@ -22,7 +22,7 @@ scheduler:
 rollout:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  max_concurrent_rollouts: 16
+  max_concurrent_rollouts: 24
   queue_size: null
   consumer_batch_size: ${valid_dataset.batch_size}
   scheduling_spec: ${actor.scheduling_spec}
