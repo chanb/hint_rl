@@ -1,155 +1,121 @@
-import os
+import json
 import sys
-
-from areal.api import AllocationMode
-from areal.api.cli_args import GRPOConfig, SGLangConfig, load_expr_config, vLLMConfig
-from areal.dataset import get_custom_dataset
-from areal.engine import RemoteSGLangEngine, RemotevLLMEngine
-from areal.infra import LocalScheduler, RayScheduler, SlurmScheduler
-from areal.utils import logging, seeding
-from areal.utils.dataloader import create_dataloader
-from areal.utils.hf_utils import load_hf_tokenizer
-from areal.utils.printing import tabulate_stats
-from areal.utils.stats_logger import StatsLogger
-
-logger = logging.getLogger("GSM8KEval")
+import io
+import signal
+import traceback
+from datasets import load_from_disk
 
 
-def main(args):
-    config, _ = load_expr_config(args, GRPOConfig)
-    tokenizer = load_hf_tokenizer(config.tokenizer_path)
+# ── Timeout helper ────────────────────────────────────────────────────────────
+class TimeoutError(Exception):
+    pass
 
-    # Load evaluation dataset
-    valid_dataset = get_custom_dataset(
-        split=config.valid_dataset.split, dataset_config=config.valid_dataset, tokenizer=tokenizer
-    )
-    valid_dataloader = create_dataloader(
-        valid_dataset,
-        rank=0,
-        world_size=1,
-        dataset_config=config.valid_dataset,
-    )
-    assert len(valid_dataloader) > 0
-
-    rollout_dir = os.path.join(
-        StatsLogger.get_log_path(
-            experiment_name=config.experiment_name,
-            trial_name=config.trial_name,
-            fileroot=config.cluster.fileroot,
-        ),
-        "rollout",
-        "0"
-    )
-    print(rollout_dir)
-
-    cnt = 0
-    for data in valid_dataloader:
-        for item in data:
-            import ipdb
-            ipdb.set_trace()
-            cnt += 1
+def timeout_handler(signum, frame):
+    raise TimeoutError("Timed out")
 
 
-if __name__ == "__main__":
-    main(sys.argv[1:])
+# ── Runner for stdin/stdout problems ─────────────────────────────────────────
+def run_io_test(solution_code: str, stdin_input: str, timeout: int = 5) -> str | None:
+    """Execute solution_code with stdin_input, return stdout or None on error."""
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout)
+    try:
+        old_stdin  = sys.stdin
+        old_stdout = sys.stdout
+        sys.stdin  = io.StringIO(stdin_input)
+        sys.stdout = io.StringIO()
+
+        exec_globals = {}
+        exec(solution_code, exec_globals)
+
+        output = sys.stdout.getvalue()
+        return output
+    except TimeoutError:
+        return None
+    except Exception:
+        traceback.print_exc()
+        return None
+    finally:
+        signal.alarm(0)
+        sys.stdin  = old_stdin
+        sys.stdout = old_stdout
 
 
-# import sys
-
-# from areal import PPOTrainer, CurriculumPPOTrainer
-# from areal.api.cli_args import GRPOConfig, load_expr_config
-# from areal.dataset import get_custom_dataset
-# from areal.utils.hf_utils import load_hf_tokenizer
-# from areal.utils.dataloader import create_dataloader
-
-# import math
-# import torch
-# import torch.utils.data.dataset as torch_dataset
-
-# class HintCurriculumWrapper(torch_dataset.Dataset):
-#     def __init__(self, dataset: int, delta: int):
-#         self.dataset = dataset
-#         self.delta = delta
-#         self.hint_length = torch.full((len(dataset),), fill_value=-1, dtype=int)
-#         self.partial_hints = torch.zeros(len(dataset), dtype=int)
-
-#     def __len__(self):
-#         return len(self.dataset)
-
-#     def __getitem__(self, idx: int) -> float:
-#         sample = self.dataset[idx]
-#         question_seg = sample["messages"][0]["content"].split(
-#             "## Hint.\n\n"
-#         )
-
-#         # No hint
-#         if len(question_seg) == 1:
-#             return sample
-
-#         # Partial hint
-#         question = question_seg[0]
-#         hint = question_seg[1].split(
-#             "\nPlease reason step by step, and put your final answer within \\boxed{}."
-#         )[0]
-
-#         if self.hint_length[idx] == -1:
-#             self.hint_length[idx] = len(hint)
-#             self.partial_hints[idx] = len(hint)
-
-#         partial_hint = hint[:self.partial_hints[idx]]
-
-#         sample["messages"][0]["content"] = (
-#             question
-#             + partial_hint
-#             + "\nPlease reason step by step, and put your final answer within \\boxed{}."
-#         )
-#         return sample
-
-#     def load_state_dict(self, state_dict):
-#         self.partial_hints = state_dict["partial_hints"]
-
-#     def state_dict(self):
-#         return {
-#             "partial_hints": self.partial_hints,
-#             "hint_length": self.hint_length,
-#         }
-
-# def main(args):
-#     config, _ = load_expr_config(args, GRPOConfig)
-#     tokenizer = load_hf_tokenizer(config.tokenizer_path)
-
-#     train_dataset = get_custom_dataset(
-#         split="train",
-#         dataset_config=config.train_dataset,
-#         tokenizer=tokenizer,
-#     )
-#     train_dataset = HintCurriculumWrapper(train_dataset, delta=1)
-#     dataloader = create_dataloader(train_dataset, rank=0, world_size=1, dataset_config=config.train_dataset)
-
-#     sample = next(iter(dataloader))
-
-#     import ipdb
-#     ipdb.set_trace()
-
-# if __name__ == "__main__":
-#     main(sys.argv[1:])
+# ── Runner for function-call problems (fn_name present) ──────────────────────
+def run_fn_test(solution_code: str, fn_name: str, inputs: list, timeout: int = 5):
+    """Execute solution_code, call fn_name(*inputs), return result or None."""
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout)
+    try:
+        exec_globals = {}
+        exec(solution_code, exec_globals)
+        fn = exec_globals[fn_name]
+        result = fn(*inputs)
+        return result
+    except TimeoutError:
+        return None
+    except Exception:
+        traceback.print_exc()
+        return None
+    finally:
+        signal.alarm(0)
 
 
-# """
-# ipdb> iterator = iter(dataloader)
-# ipdb> sample = next(iterator)
-# ipdb> sample
-# [{'answer': ['\\boxed{342}'], 'messages': [{'content': 'A bored student walks down a hall that contains a row of closed lockers, numbered $1$ to $1024$. He opens the locker numbered 1, and then alternates between skipping and opening each locker thereafter. When he reaches the end of the hall, the student turns around and starts back. He opens the first closed locker he encounters, and then alternates between skipping and opening each closed locker thereafter. The student continues wandering back and forth in this manner until every locker is open. What is the number of the last locker he opens?\n\n## Hint.\n\nThe problem involves a student opening lockers in a specific pattern: starting from locker 1, he alternates between skipping and opening lockers, turns around at the end, and repeats the process until all lockers are open. The goal is to determine the number of the last locker opened.\n\nKey steps and reasoning:\n\n1. **Understanding the Process**: The student opens every other closed locker starting from the first closed locker in each direction. This process continues until all lockers are open.\n\n2. **Recursive Formula**: The solution involves a recursive approach where the last locker opened for \\( n \\) lockers can be determined by reducing the problem size. The formula derived is:\n   \\[\n   f(n) = 2 \\left( \\left\\lfloor \\frac{n}{2} \\right\\rfloor - f\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 525}, {'answer': ['\\boxed{56}'], 'messages': [{'content': 'Paint three faces of an $8 \\times 8$ cube red and three faces blue (requiring that any three faces sharing a common vertex cannot all be the same color), then cut it into 512 $1 \\times 1 \\times 1$ small cubes. Among these 512 small cubes, there are $\\qquad$ small cubes that have both red and blue faces.\n\n## Hint.\n\nTo solve the problem of determining how many small cubes have both red and blue faces after painting three faces of an \\(8 \\times 8 \\times 8\\) cube red and three faces blue, we need to consider the constraints and structure of the cube.\n\n1. **Understanding the Constraints**:\n   - Three faces are painted red and three blue.\n   - No three faces sharing a common vertex can all be the same color.\n\n2. **Valid Coloring**:\n   - The cube must be painted such that no three faces meeting at any vertex are all red or all blue.\n   - This implies that each vertex must have exactly two faces of one color and one face of the other color.\n\n3. **Edge Analysis**:\n   - Each edge of the cube is shared by two faces.\n   - We need to determine the number of edges where red and blue faces meet (red-blue edges).\n\n4. **Equations and Calc\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 883}, {'answer': ['\\boxed{C}'], 'messages': [{'content': 'If a certain commodity is sold at 80% of its marked price, a profit of 20% can be made. If it is sold at the original marked price, the profit made will be (\u3000\u3000)\nA: 25%\nB: 40%\nC: 50%\nD: 66.7%\n\n## Hint.\n\nLet the marked price be \\( M \\) and the cost price be \\( C \\).\n\nWhen the commodity is sold at 80% of the marked price, the selling price \\( S_1 = 0.8M \\), which results in a 20% profit. Using the profit percentage formula:\n\n\\[\n20\\% = \\left( \\frac{0.8M - C}{C} \\right) \\times 100\\%\n\\]\n\nSolving for \\( C \\):\n\n\\[\n0.2 = \\frac{0.8M - C}{C}\n\\]\n\\[\n0.2C = 0.8M - C\n\\]\n\\[\n1.2C = 0.8M\n\\]\n\\[\nC = \\frac{0.8}{1.2}M = \\frac{2}{3}M\n\\]\n\nWhen the commodity is \nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': None}, {'answer': ['\\boxed{C}'], 'messages': [{'content': "5. Put 10 identical balls into 3 boxes numbered $1, 2, 3$ (all 10 balls must be placed each time), with the requirement that the number of balls in each box is no less than the box's number. The number of such ways to place the balls is (   .\n(A) 9\n(B) 12\n(C) 15\n(D) 18\n\n## Hint.\n\nTo solve the problem of placing 10 identical balls into 3 boxes numbered 1, 2, 3, with the requirement that each box contains at least as many balls as its number, we can use the following steps:\n\n1. **Subtract the minimum number of balls required for each box**:\n   - Box 1 must have at least 1 ball.\n   - Box 2 must have at least 2 balls.\n   - Box 3 must have at least 3 balls.\n   \n   Therefore, we subtract these minimums from the total number of balls:\n   \\[\n   10 - 1 - 2 - 3 = 4\n   \\]\n   This leaves us with 4 balls to distribute freely among the 3 boxes.\n\n2. **Transform the problem into a non-negative integer solution problem**:\n   - Let \\( x_1 \\), \\( x_2 \\), and \\( x_3 \\) be the number of additional balls pl\nPlease reason step by step, and put your final answer within \\boxed{}.", 'role': 'user'}], 'index': 443}, {'answer': ['\\boxed{C}'], 'messages': [{'content': 'The negation of the proposition "For all \\\\(x \\in \\mathbb{R}\\\\), \\\\(x^{3}-3x > 0\\\\)" is (\u3000\u3000)\nA: For all \\\\(x \\in \\mathbb{R}\\\\), \\\\(x^{3}-3x \\leqslant 0\\\\)\nB: For all \\\\(x \\in \\mathbb{R}\\\\), \\\\(x^{3}-3x  0\\\\)\n\n## Hint.\n\nThe original proposition is "For all \\(x \\in \\mathbb{R}\\), \\(x^3 - 3x > 0\\)." To find its negation, we need to convert the universal quantifier ("for all") into an existential quantifier ("there exists") and negate the inner statement. \n\nThe negation of a universal statement \\(\\forall x, P(x)\\) is \\(\\exists x, \\neg P(x)\\). Applying this to the given proposition, the negation becomes "There exists an\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': None}, {'answer': ['\\boxed{13}'], 'messages': [{'content': '13. $A B C D E F G H$ is a cube in which $A B C D$ is the top face, with vertices $H, G, F$ and $E$ directly below the vertices $A, B$, $C$ and $D$ respectively. A real number is assigned to each vertex. At each vertex, the average of the numbers in the three adjacent vertices is then computed. The averages obtained at $A, B, C, D, E, F, G, H$ are 1, 2, 3, 4, 5, 6, 7, 8 respectively. Find the number assigned to vertex $F$.\n(2 marks)\n13. $A B C D E F G H$ is a cube, where $A B C D$ is the top face, and $H, G, F, E$ are directly below $A, B, C, D$ respectively. A real number is assigned to each vertex, and then at each vertex, the average of the numbers in the three adjacent vertices is computed. The averages obtained at $A, B, C, D, E, F, G, H$ are 1, 2, 3, 4, 5, 6, 7, 8 respectively. Find the number assigned to vertex $F$.\n\n## Hint.\n\nGiven a cube \\(ABCDEFGH\\) where \\(ABCD\\) is the top face and \\(HGFE\\) is the bottom face, with each vertex assigned a real number. The average of the numbers at the three adjacent vertices for each vertex is given as 1, 2, 3, 4, 5, 6, 7, 8 respectively. We need to find the number assigned to vertex \\(F\\).\n\nWe denote the numbers at vertices \\(A, B, C, D, E, F, G, H\\) as \\(a, b, c, d, e, f, g, h\\) respectively. The given averages translate to the following equations:\n\n1. \\(\\frac{b + d + h}{3} = 1 \\implies b + d + h = 3\\)\n2. \\(\\frac{a + c + g}{3} = 2 \\implies a + c + g = 6\\)\n3. \\(\\frac{b + d + f}{3} = 3 \\implies b + d + f = 9\\)\n4. \\(\\frac{a + c + e}{3} = 4 \\implies a + c + e = 12\\)\n5. \\(\\frac{d + f + h}{3} = 5 \\implies d + f + h = 15\\)\n6. \\(\\frac{c + e + g}{3} = 6 \\implies c + e + g = 18\\)\n7. \\(\\frac{b + f + h}{3} = 7 \\impli\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': None}, {'answer': ['\\boxed{1}'], 'messages': [{'content': '2. Robots A and B start from the starting point at the same time, moving uniformly along a hundred-meter track, and the automatic recorder shows: when A is $1 \\mathrm{~m}$ away from the finish line, B is $2 \\mathrm{~m}$ away from the finish line; when A reaches the finish line, B is $1.01 \\mathrm{~m}$ away from the finish line. Then the actual length of this track is more than $100 \\mathrm{~m}$ by $\\qquad$\n\n## Hint.\n\nRobots A and B start from the starting point at the same time, moving uniformly along a track. The automatic recorder shows the following events: when A is 1 meter away from the finish line, B is 2 meters away; when A reaches the finish line, B is 1.01 meters away. We need to determine the actual length of the track, which is more than 100 meters.\n\n1. Let \\( L \\) be the actual length of the track. The speeds of robots A and B are \\( v_A \\) and \\( v_B \\) respectively.\n2. When A is 1 meter away from the finish line, B is 2 meters away. The time taken for both robots to reach these points is the same:\n   \\[\n   \\frac{L - 1}{v_A} = \\frac{L - 2}{v_B}\n   \\]\n3. When A reaches the finish line, B is 1.01 meters away. The time taken for A to finish the track is:\n   \\[\n   \\frac{L}{v_A} = \\frac{L - \nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 806}, {'answer': ['\\boxed{40.5}'], 'messages': [{'content': '59. The fox and the weasel are having a jumping contest. The fox jumps 4.5 meters each time, while the weasel jumps 2.75 meters each time. They start jumping at the same time and jump exactly once every second. Along the way, there is a trap every 12.375 meters from the starting point. When one of them falls into a trap, the other has jumped $\\qquad$ meters.\n\n## Hint.\n\nTo determine when one of the animals falls into a trap and how far the other has jumped, we need to find the smallest time \\( t \\) (in seconds) such that the distance jumped by either the fox or the weasel is a multiple of 12.375 meters.\n\nFirst, convert the distances to fractions:\n- The fox jumps \\( \\frac{9}{2} \\) meters each second.\n- The weasel jumps \\( \\frac{11}{4} \\) meters each second.\n- The traps are every \\( \\frac{99}{8} \\) meters.\n\nFor the fox:\nWe need \\( \\frac{9}{2} \\cdot t = \\frac{99}{8} \\cdot n \\) for some integer \\( n \\). Solving for \\( t \\):\n\\[\nt = \\frac{99}{8} \\cdot \nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 440}, {'answer': ['\\boxed{B}'], 'messages': [{'content': 'In a bag, there are 14 balls, including 4 white balls and 10 red balls. Now, if 6 balls are drawn from the bag such that there are at least 2 white balls and no more than 3 red balls, then the number of ways to draw the balls is (\u3000\u3000)\nA: 1\nB: 2\nC: 3\nD: 4\n\n## Hint.\n\nGiven a bag with 14 balls (4 white and 10 red), we need to determine the number of ways to draw 6 balls such that there are at least 2 white balls and no more than 3 red balls.\n\nFirst, we translate the conditions into mathematical terms:\n1. At least 2 white balls (W ≥ 2)\n2. No more than 3 red balls (R ≤ 3)\n\nSince the total number of balls drawn is 6, we have R = 6 - W. Substituting R into the second condition gives:\n\\[ 6 - W \\leq 3 \\implies W \\geq 3 \\]\n\nCombining both conditions, we find that W must be 3 or 4. Therefore, the valid cases are:\n- 3 white balls and 3 red balls\n- 4 white balls and 2 red balls\n\nWe calculate the number of ways for each case us\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 168}, {'answer': ['\\boxed{360}'], 'messages': [{'content': 'There are 5 boys and 3 girls. From this group, 5 subjects representatives are to be selected. Find the number of ways to select the representatives under the following conditions:\n1) A specific girl must be the Chinese representative.\n2) There are girls in the selection, but fewer than boys.\n3) A specific boy must be included, but he cannot be the Math representative.\n4) A specific girl must be the Chinese representative, and a specific boy must be a subject representative, but not for Math.\n\n## Hint.\n\nGiven the problem of selecting 5 subject representatives from 5 boys and 3 girls under specific conditions, we need to find the number of ways to select the representatives for condition 4: "A specific girl must be the Chinese representative, and a specific boy must be a subject representative, but not for Math."\n\n1. **Assign the specific girl (G1) to the Chinese representative position**: This is fixed, so there is 1 way to do this.\n2. **Assign the specific boy (B1) to a subject other than Math**: There are 4 remaining subjects (Math, Subj3, Subj4, Subj5). Since B\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 328}, {'answer': ['\\boxed{3435}'], 'messages': [{'content': "# Problem 4. (10 points)\n\nOn December 31 at 16:35, Misha realized he had no New Year's gifts for his entire family. He wants to give different gifts to his mother, father, brother, and sister. Each of the gifts is available in 4 stores: Romashka, Odynachik, Nezabudka, and Lysichka, which close at 20:00. The journey from home to each store and between any two stores takes 30 minutes.\n\nThe table below shows the cost of the gifts in all four stores and the time Misha will need to spend shopping in each store. What is the minimum amount of money Misha can spend if he must definitely manage to buy all 4 gifts?\n\n|  | mother | father | brother | sister | Time spent in the store (min.) |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| Romashka | 1000 | 750 | 930 | 850 | 35 |\n| Odynachik | 1050 | 790 | 910 | 800 | 30 |\n\n\n| Nezabudka | 980 | 810 | 925 | 815 | 40 |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| Lysichka | 1100 | 755 | 900 | 820 | 25 |\n\n## Hint.\n\nTo determine the minimum amount Misha can spend while ensuring he buys all four gifts before the stores close, we need to consider both the cost of gifts and the time constraints. Here's the step-by-step solution:\n\n1. **Time Available**: From 16:35 to 20:00 is 3 hours and 25 minutes (205 minutes).\n2. **Travel Time**: 30 minutes per store visit (including home to first store and between stores).\n3. **Store Shopping Times**: Vary per store (Romashka: 35 min, Odynachik: 30 min, Nezabudka: 40 min, Lysichka: 25 min).\n\n**Key Steps**:\n- **Evaluate Possible Store Combinations** (1 to 4 stores) to minimize total cost while ensuring the total t\nPlease reason step by step, and put your final answer within \\boxed{}.", 'role': 'user'}], 'index': None}, {'answer': ['\\boxed{B}'], 'messages': [{'content': "The graph of the function $f(x) = x - x^3 - 1$ has a tangent line at the point $(1, -1)$ that is perpendicular to the line $4x + ay + 3 = 0$. What is the value of $a$?\n\nA: $8$\n\nB: $-8$\n\nC: $2$\n\nD: $-2$\n\n## Hint.\n\nTo find the value of \\(a\\) such that the tangent line to the graph of \\(f(x) = x - x^3 - 1\\) at the point \\((1, -1)\\) is perpendicular to the line \\(4x + ay + 3 = 0\\), we follow these steps:\n\n1. **Calculate the derivative of \\(f(x)\\)**:\n   \\[\n   f'(x) = \\frac{d}{dx}(x - x^3 - 1) = 1 - 3x^2\n   \\]\n   Evaluating the derivative at \\(x = 1\\):\n   \\[\n   f'(1) = 1 - 3(1)^2 = 1 - 3 = -2\n   \\]\n   The slope of the tangent line at \\((1, -1)\\) is \\(-2\\).\n\n2. **Determine the slope of the line \\(4x + ay + 3 = 0\\)**:\n   Rewrite the equation in slope-intercept form:\n   \\[\n   4x + ay + 3 = 0 \\implies ay = -4x - 3 \\implies y = \\left(-\\frac{4}{a}\\right)x - \\frac{3}{a}\n\nPlease reason step by step, and put your final answer within \\boxed{}.", 'role': 'user'}], 'index': None}, {'answer': ['\\boxed{B}'], 'messages': [{'content': '3. A box contains 3 black balls and 4 white balls. Now, a ball is randomly drawn from the box each time, and the ball is not put back after it is drawn. Each ball has an equal chance of being drawn, until all balls of one color are drawn. What is the probability that the last ball drawn is black? ( ).\n(A) $\\frac{3}{5}$\n(B) $\\frac{4}{7}$\n(C) $\\frac{1}{2}$\n(D) $\\frac{3}{7}$\n\n## Hint.\n\nThe problem involves finding the probability that the last ball drawn is black when drawing balls without replacement from a box containing 3 black balls and 4 white balls, stopping when all balls of one color are drawn.\n\nKey steps to solve the problem:\n\n1. **Understanding the Stopping Condition**: The process stops when all balls of one color are drawn. The last ball drawn will be of the color that was exhausted first.\n2. **Permutation Insight**: Consider the entire permutation of all 7 balls. The process stops when either all black balls or all white balls are drawn. The key insight is that the last ball drawn in the process is determined by the color of t\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 530}, {'answer': ['\\boxed{D}'], 'messages': [{'content': "Regarding the following propositions:  \n\\\\(①\\\\) Using the coefficient of determination \\\\(R^{2}\\\\) to characterize the regression effect, the smaller the \\\\(R^{2}\\\\), the better the model's fitting effect;  \n\\\\(②\\\\) Given that the random variable \\\\(ξ\\\\) follows a normal distribution \\\\(N(2,σ^{2})\\\\), and \\\\(P(ξ \\leqslant 4)=0.79\\\\), then \\\\(P(ξ \\leqslant -2)=0.21\\\\);  \n\\\\(③\\\\) Using systematic sampling to select \\\\(5\\\\) students from a class by their student numbers for an activity, and the students with numbers \\\\(5\\\\), \\\\(16\\\\), \\\\(27\\\\), \\\\(38\\\\), \\\\(49\\\\) were selected, then the possible number of students in the class could be \\\\(60\\\\);  \nThe number of correct propositions is \\\\((\\\\)\u3000\u3000\\\\()\\\\)  \nA: \\\\(3\\\\)  \nB: \\\\(2\\\\)  \nC: \\\\(1\\\\)  \nD: \\\\(0\\\\)\n\n## Hint.\n\nLet's analyze each proposition step by step:\n\n**Proposition ①**: The coefficient of determination \\(R^2\\) measures the proportion of variance in the dependent variable explained by the regression model. A higher \\(R^2\\) indicates a better fit, so a smaller \\(R^2\\) means a worse fit. Therefore, proposition ① is incorrect.\n\n**Proposition ②**: The random variable \\(ξ\\) follows \\(N(2, σ^2)\\). Given \\(P(ξ \\leq 4) = 0.79\\), we standardize 4: \\(z = \\frac{4 - 2}{σ}\\). The z-score corresponding to 0.79 is approximately 0.806, leading to \\(σ \\approx 2.48\\). For \\(P(ξ \\leq -2)\\), we standardize -2: \\\nPlease reason step by step, and put your final answer within \\boxed{}.", 'role': 'user'}], 'index': 616}, {'answer': ['\\boxed{0.872}'], 'messages': [{'content': 'Task 1. The probability of event $A$ occurring in each of 484 independent trials is 0.75. Find the probability that the relative frequency of event $A$ deviates from its probability in absolute value by no more than 0.03.\n\n## Hint.\n\nGiven 484 independent trials where the probability of event \\( A \\) occurring in each trial is 0.75, we need to find the probability that the relative frequency of event \\( A \\) deviates from its probability by no more than 0.03 in absolute value.\n\n1. **Convert the relative frequency deviation to the count deviation:**\n   - The relative frequency of \\( A \\) is \\( \\frac{X}{484} \\), where \\( X \\) is the number of times \\( A \\) occurs.\n   - We need \\( \\left| \\frac{X}{484} - 0.75 \\right| \\leq 0.03 \\), which translates to \\( 0.72 \\leq \\frac{X}{484} \\leq 0.78 \\).\n   - Converting to counts: \\( 484 \\times 0.72 = 348.48 \\) and \\( 484 \\times 0.78 = 377.52 \\). Thus, \\( X \\) must be between 349 and 377 (inclusive).\n\n2. **Apply the normal approximation to the binomial distribution:**\n   - The binomial distribution parameters are \\( n = 484 \\) and \\( p = 0.75 \\).\n   - Mean \\( \\mu = np \nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': None}, {'answer': ['\\boxed{C}'], 'messages': [{'content': 'Two ordered positive integers have a sum of 915 and their greatest common divisor is 61. There are ( ) possible pairs of these two numbers.\nA: 4\nB: 6\nC: 8\nD: 14\n\n## Hint.\n\nGiven two ordered positive integers with a sum of 915 and their greatest common divisor (GCD) is 61, we need to find the number of possible pairs.\n\n1. **Express the numbers in terms of their GCD**:\n   - Let the two numbers be \\(61a\\) and \\(61b\\) where \\(a\\) and \\(b\\) are coprime positive integers (i.e., \\(\\gcd(a, b) = 1\\)).\n   - Their sum is \\(915\\), so \\(61a + 61b = 915\\). Factoring out 61, we get \\(a + b = \\frac{915}{61} = 15\\).\n\n2. **Find coprime pairs \\((a, b)\\) such that \\(a + b = 15\\)**:\n   - The pairs \\((a, b)\\) must satisfy \\(a + b = 15\\) and \\(\\gcd(a, b) = 1\\).\n   - The number of such pairs can be determined by finding the number of integers \\(a\\) from 1 to 14 \nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 228}]
-# ipdb> sample.keys()
-# *** AttributeError: 'list' object has no attribute 'keys'
-# ipdb> sample[0]
-# {'answer': ['\\boxed{342}'], 'messages': [{'content': 'A bored student walks down a hall that contains a row of closed lockers, numbered $1$ to $1024$. He opens the locker numbered 1, and then alternates between skipping and opening each locker thereafter. When he reaches the end of the hall, the student turns around and starts back. He opens the first closed locker he encounters, and then alternates between skipping and opening each closed locker thereafter. The student continues wandering back and forth in this manner until every locker is open. What is the number of the last locker he opens?\n\n## Hint.\n\nThe problem involves a student opening lockers in a specific pattern: starting from locker 1, he alternates between skipping and opening lockers, turns around at the end, and repeats the process until all lockers are open. The goal is to determine the number of the last locker opened.\n\nKey steps and reasoning:\n\n1. **Understanding the Process**: The student opens every other closed locker starting from the first closed locker in each direction. This process continues until all lockers are open.\n\n2. **Recursive Formula**: The solution involves a recursive approach where the last locker opened for \\( n \\) lockers can be determined by reducing the problem size. The formula derived is:\n   \\[\n   f(n) = 2 \\left( \\left\\lfloor \\frac{n}{2} \\right\\rfloor - f\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}], 'index': 525}
-# ipdb> sample[0].keys()
-# dict_keys(['answer', 'messages', 'index'])
-# ipdb> sample[0]["messages"]
-# [{'content': 'A bored student walks down a hall that contains a row of closed lockers, numbered $1$ to $1024$. He opens the locker numbered 1, and then alternates between skipping and opening each locker thereafter. When he reaches the end of the hall, the student turns around and starts back. He opens the first closed locker he encounters, and then alternates between skipping and opening each closed locker thereafter. The student continues wandering back and forth in this manner until every locker is open. What is the number of the last locker he opens?\n\n## Hint.\n\nThe problem involves a student opening lockers in a specific pattern: starting from locker 1, he alternates between skipping and opening lockers, turns around at the end, and repeats the process until all lockers are open. The goal is to determine the number of the last locker opened.\n\nKey steps and reasoning:\n\n1. **Understanding the Process**: The student opens every other closed locker starting from the first closed locker in each direction. This process continues until all lockers are open.\n\n2. **Recursive Formula**: The solution involves a recursive approach where the last locker opened for \\( n \\) lockers can be determined by reducing the problem size. The formula derived is:\n   \\[\n   f(n) = 2 \\left( \\left\\lfloor \\frac{n}{2} \\right\\rfloor - f\nPlease reason step by step, and put your final answer within \\boxed{}.', 'role': 'user'}]
-# ipdb> sample[0]["messages"]["content"]
-# *** TypeError: list indices must be integers or slices, not str
-# ipdb> sample[0]["messages"][0]["content"]
-# 'A bored student walks down a hall that contains a row of closed lockers, numbered $1$ to $1024$. He opens the locker numbered 1, and then alternates between skipping and opening each locker thereafter. When he reaches the end of the hall, the student turns around and starts back. He opens the first closed locker he encounters, and then alternates between skipping and opening each closed locker thereafter. The student continues wandering back and forth in this manner until every locker is open. What is the number of the last locker he opens?\n\n## Hint.\n\nThe problem involves a student opening lockers in a specific pattern: starting from locker 1, he alternates between skipping and opening lockers, turns around at the end, and repeats the process until all lockers are open. The goal is to determine the number of the last locker opened.\n\nKey steps and reasoning:\n\n1. **Understanding the Process**: The student opens every other closed locker starting from the first closed locker in each direction. This process continues until all lockers are open.\n\n2. **Recursive Formula**: The solution involves a recursive approach where the last locker opened for \\( n \\) lockers can be determined by reducing the problem size. The formula derived is:\n   \\[\n   f(n) = 2 \\left( \\left\\lfloor \\frac{n}{2} \\right\\rfloor - f\nPlease reason step by step, and put your final answer within \\boxed{}.'
-# """
+# ── Normalise output for comparison ──────────────────────────────────────────
+def normalise(s: str) -> str:
+    return s.strip().replace("\r\n", "\n")
+
+
+# ── Evaluate all test cases ───────────────────────────────────────────────────
+def evaluate(solution_code: str, input_output: dict) -> dict:
+    inputs  = input_output["inputs"]
+    outputs = input_output["outputs"]
+    fn_name = input_output.get("fn_name")   # present for function-call problems
+
+    results = []
+    for inp, expected in zip(inputs, outputs):
+        print(inp, expected)
+        if fn_name:
+            # inputs are already parsed as Python objects in fn_name problems
+            actual = run_fn_test(solution_code, fn_name, inp if isinstance(inp, list) else [inp])
+            passed = str(actual).strip() == str(expected).strip()
+        else:
+            actual = run_io_test(solution_code, inp)
+            passed = actual is not None and normalise(actual) == normalise(expected)
+
+        results.append({
+            "input":    inp,
+            "expected": expected,
+            "actual":   actual,
+            "passed":   passed,
+        })
+
+    n_passed = sum(r["passed"] for r in results)
+    return {
+        "passed":  n_passed,
+        "total":   len(results),
+        "reward":  n_passed / len(results) if results else 0.0,   # ← use as RL reward
+        "details": results,
+    }
+
+# ── Load dataset ──────────────────────────────────────────────────────────────
+ds = load_from_disk("/home/chanb/scratch/datasets/apps/data/apps_hint_sep/train")
+
+for sample_i, sample in enumerate(ds):
+    question    = sample["question"]
+    input_output = json.loads(sample["test_cases"]) if sample["test_cases"] else None
+    candidate_solution   = sample["answer"][0][10:-3]
+    print(f"Sample {sample_i}:")
+    print(input_output)
+    print(candidate_solution)
+
+    # ── Run ───────────────────────────────────────────────────────────────────────
+    if input_output:
+        report = evaluate(candidate_solution, input_output)
+        print(f"Passed: {report['passed']} / {report['total']}")
+        print(f"Reward: {report['reward']:.2f}")
+        for i, r in enumerate(report["details"]):
+            status = "✓" if r["passed"] else "✗"
+            print(f"  [{status}] test {i+1}")
+    else:
+        print("No test cases available for this sample.")

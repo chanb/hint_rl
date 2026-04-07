@@ -34,4 +34,3 @@ export trial_name=local_eval-hint_rl_163-epoch32epochstep13globalstep461 actor_p
 export trial_name=local_eval-hint_rl_163-epoch33epochstep13globalstep475 actor_path=/home/chanb/scratch/hint_rl_results/checkpoints/chanb/openmath-dapo/local_train-hint_rl-continue_from_163/default/epoch33epochstep13globalstep475 dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_0
 export trial_name=local_eval-hint_rl_163-epoch34epochstep13globalstep489 actor_path=/home/chanb/scratch/hint_rl_results/checkpoints/chanb/openmath-dapo/local_train-hint_rl-continue_from_163/default/epoch34epochstep13globalstep489 dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_0
 export trial_name=local_eval-hint_rl_163-epoch35epochstep13globalstep503 actor_path=/home/chanb/scratch/hint_rl_results/checkpoints/chanb/openmath-dapo/local_train-hint_rl-continue_from_163/default/epoch35epochstep13globalstep503 dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_0
-
