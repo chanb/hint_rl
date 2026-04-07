@@ -1,121 +1,167 @@
+import io
 import json
 import sys
-import io
-import signal
 import traceback
+from dataclasses import dataclass, field
 from datasets import load_from_disk
 
 
-# ── Timeout helper ────────────────────────────────────────────────────────────
-class TimeoutError(Exception):
-    pass
+# ─────────────────────────────────────────────────────────────────────────────
+# Data classes
+# ─────────────────────────────────────────────────────────────────────────────
 
-def timeout_handler(signum, frame):
-    raise TimeoutError("Timed out")
+@dataclass
+class TestResult:
+    index:    int
+    passed:   bool
+    error:    str = ""
 
 
-# ── Runner for stdin/stdout problems ─────────────────────────────────────────
-def run_io_test(solution_code: str, stdin_input: str, timeout: int = 5) -> str | None:
-    """Execute solution_code with stdin_input, return stdout or None on error."""
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(timeout)
+@dataclass
+class VerificationReport:
+    passed:  int
+    total:   int
+    results: list = field(default_factory=list)
+    error:   str  = ""
+
+    @property
+    def reward(self) -> float:
+        return self.passed / self.total if self.total else 0.0
+
+    def __str__(self):
+        lines = [f"Passed: {self.passed}/{self.total}  |  Reward: {self.reward:.3f}"]
+        if self.error:
+            lines.append(f"Error: {self.error}")
+        for r in self.results:
+            icon = "✓" if r.passed else "✗"
+            lines.append(f"  [{icon}] test {r.index + 1}" +
+                         (f" — {r.error}" if r.error else ""))
+        return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Runners
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_io(code: str, stdin_str: str) -> tuple[str, str]:
+    """Run code with stdin. Returns (stdout, error)."""
+    old_stdin, old_stdout = sys.stdin, sys.stdout
+    print("---")
+    print(code)
+    print(stdin_str)
+    print("---")
     try:
-        old_stdin  = sys.stdin
-        old_stdout = sys.stdout
-        sys.stdin  = io.StringIO(stdin_input)
+        sys.stdin  = io.StringIO(stdin_str)
         sys.stdout = io.StringIO()
-
-        exec_globals = {}
-        exec(solution_code, exec_globals)
-
-        output = sys.stdout.getvalue()
-        return output
-    except TimeoutError:
-        return None
+        exec(code, {})
+        return sys.stdout.getvalue(), ""
     except Exception:
-        traceback.print_exc()
-        return None
+        return "", traceback.format_exc(limit=3)
     finally:
-        signal.alarm(0)
-        sys.stdin  = old_stdin
-        sys.stdout = old_stdout
+        sys.stdin, sys.stdout = old_stdin, old_stdout
 
 
-# ── Runner for function-call problems (fn_name present) ──────────────────────
-def run_fn_test(solution_code: str, fn_name: str, inputs: list, timeout: int = 5):
-    """Execute solution_code, call fn_name(*inputs), return result or None."""
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(timeout)
+def run_fn(code: str, fn_name: str, args: list) -> tuple[any, str]:
+    """Run code and call fn_name(*args). Returns (result, error)."""
     try:
-        exec_globals = {}
-        exec(solution_code, exec_globals)
-        fn = exec_globals[fn_name]
-        result = fn(*inputs)
-        return result
-    except TimeoutError:
-        return None
+        ns = {}
+        exec(code, ns)
+        return ns[fn_name](*args), ""
     except Exception:
-        traceback.print_exc()
-        return None
-    finally:
-        signal.alarm(0)
+        return None, traceback.format_exc(limit=3)
 
 
-# ── Normalise output for comparison ──────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# Normalise
+# ─────────────────────────────────────────────────────────────────────────────
+
 def normalise(s: str) -> str:
-    return s.strip().replace("\r\n", "\n")
+    return "\n".join(line.rstrip() for line in str(s).strip().splitlines())
 
 
-# ── Evaluate all test cases ───────────────────────────────────────────────────
-def evaluate(solution_code: str, input_output: dict) -> dict:
-    inputs  = input_output["inputs"]
-    outputs = input_output["outputs"]
-    fn_name = input_output.get("fn_name")   # present for function-call problems
+# ─────────────────────────────────────────────────────────────────────────────
+# Verifier
+# ─────────────────────────────────────────────────────────────────────────────
+
+def verify(
+    solution:     str,
+    input_output: dict,
+    starter_code: str = "",
+    max_tests:    int = None,
+) -> VerificationReport:
+    # Inject starter code if not already present
+    if starter_code and starter_code.strip() not in solution:
+        code = starter_code.strip() + "\n\n" + solution
+    else:
+        code = solution
+
+    inputs   = input_output.get("inputs",  [])
+    outputs  = input_output.get("outputs", [])
+    fn_name  = input_output.get("fn_name")
+
+    if max_tests:
+        inputs  = inputs[:max_tests]
+        outputs = outputs[:max_tests]
 
     results = []
-    for inp, expected in zip(inputs, outputs):
-        print(inp, expected)
+    for i, (inp, expected) in enumerate(zip(inputs, outputs)):
         if fn_name:
-            # inputs are already parsed as Python objects in fn_name problems
-            actual = run_fn_test(solution_code, fn_name, inp if isinstance(inp, list) else [inp])
-            passed = str(actual).strip() == str(expected).strip()
+            args = inp if isinstance(inp, list) else [inp]
+            actual, err = run_fn(code, fn_name, args)
+            if err:
+                results.append(TestResult(i, False, error=err[:120]))
+            else:
+                passed = str(actual).strip() == str(expected).strip()
+                results.append(TestResult(i, passed))
         else:
-            actual = run_io_test(solution_code, inp)
-            passed = actual is not None and normalise(actual) == normalise(expected)
+            actual, err = run_io(code, str(inp))
+            if err:
+                results.append(TestResult(i, False, error=err[:120]))
+            else:
+                passed = normalise(actual) == normalise(expected)
+                results.append(TestResult(i, passed))
 
-        results.append({
-            "input":    inp,
-            "expected": expected,
-            "actual":   actual,
-            "passed":   passed,
-        })
+    passed = sum(r.passed for r in results)
+    return VerificationReport(passed=passed, total=len(results), results=results)
 
-    n_passed = sum(r["passed"] for r in results)
-    return {
-        "passed":  n_passed,
-        "total":   len(results),
-        "reward":  n_passed / len(results) if results else 0.0,   # ← use as RL reward
-        "details": results,
-    }
+
+def verify_sample(sample: dict, solution: str = None, max_tests: int = None) -> VerificationReport:
+    """Pass a raw TACO sample. Uses first ground-truth solution if none provided."""
+    raw_io = sample.get("test_cases") or "{}"
+
+    print(sample.keys())
+    print(raw_io)
+
+    try:
+        io_dict = json.loads(raw_io) if isinstance(raw_io, str) else raw_io
+    except json.JSONDecodeError as e:
+        return VerificationReport(0, 0, error=f"Bad input_output JSON: {e}")
+
+    if not io_dict or not io_dict.get("inputs"):
+        return VerificationReport(0, 0, error="No test cases available")
+
+    if solution is None:
+        solution = sample["answer"][0][10:-3]
+
+    return verify(
+        solution=solution,
+        input_output=io_dict,
+        starter_code=sample.get("starter_code") or "",
+        max_tests=max_tests,
+    )
 
 # ── Load dataset ──────────────────────────────────────────────────────────────
-ds = load_from_disk("/home/chanb/scratch/datasets/apps/data/apps_hint_sep/train")
+ds = load_from_disk("/home/chanb/scratch/datasets/taco/data/taco_hint_sep/train")
 
 for sample_i, sample in enumerate(ds):
-    question    = sample["question"]
-    input_output = json.loads(sample["test_cases"]) if sample["test_cases"] else None
-    candidate_solution   = sample["answer"][0][10:-3]
-    print(f"Sample {sample_i}:")
-    print(input_output)
-    print(candidate_solution)
+    if sample_i > 1:
+        break
 
-    # ── Run ───────────────────────────────────────────────────────────────────────
-    if input_output:
-        report = evaluate(candidate_solution, input_output)
-        print(f"Passed: {report['passed']} / {report['total']}")
-        print(f"Reward: {report['reward']:.2f}")
-        for i, r in enumerate(report["details"]):
-            status = "✓" if r["passed"] else "✗"
-            print(f"  [{status}] test {i+1}")
-    else:
-        print("No test cases available for this sample.")
+
+    print("── Ground-truth solution ──")
+    report = verify_sample(sample, max_tests=5)
+    print(report)
+
+    # print("\n── Broken solution ──")
+    # report2 = verify_sample(sample, solution="print('wrong')", max_tests=5)
+    # print(report2)

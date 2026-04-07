@@ -1,0 +1,9 @@
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00000-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00001-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00002-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00003-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00004-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00005-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00006-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00007-of-00009.arrow
+wget https://huggingface.co/datasets/BAAI/TACO/resolve/main/train/data-00008-of-00009.arrow
