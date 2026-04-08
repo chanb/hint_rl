@@ -1,6 +1,6 @@
 from datasets import load_from_disk, load_dataset
 
-from testing_util import run_test
+from areal.utils.pytest_util import run_test
 import json, os
 import multiprocessing
 import numpy as np

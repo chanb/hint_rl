@@ -1,6 +1,6 @@
 # modifed from https://github.com/hendrycks/apps/blob/main/eval/testing_util.py to fix some evaluation bugs and add instructions
 
-from pyext2 import RuntimeModule
+from areal.utils.pyext2 import RuntimeModule
 import signal
 import numpy as np
 
@@ -74,16 +74,13 @@ def run_test(sample, test=None, debug=False):
             synthesized_code = synthesize_cb_code(test, debug)
             method_func = compile_and_get_func(synthesized_code, which_type, method_name, timeout=TIMEOUT, debug=debug)
         elif which_type == CODE_TYPE.standard_input:
-            print("COMPILE")
             synthesized_code, exec_code = synthesize_std_code(test, debug)
             method_func = compile_and_get_func(synthesized_code, which_type, method_name, timeout=TIMEOUT, debug=debug)
 
         if not method_func:
-            print("BAD")
             results.append(-2)
             return results
         else:
-            print("EXECUTE")
             if which_type == CODE_TYPE.call_based:  # Call-based
                 detail_results, debug_infos = execute_cb_code(method_func, inputs_list, outputs_list, timeout=TIMEOUT, early_stop=False, debug=debug)
             elif which_type == CODE_TYPE.standard_input:
@@ -91,7 +88,6 @@ def run_test(sample, test=None, debug=False):
                 debug_infos = detail_results.get('debug', None)
                 detail_results = {k:v for k, v in detail_results.items() if k!='debug'}
                 if set(detail_results.values()) == {(False, 'returncode:1')}:
-                    print("EXECUTE 2")
                     detail_results = execute_std_code(synthesized_code+'\ncode()\n', inputs_list, outputs_list, timeout=TIMEOUT, early_stop=False, debug=debug)
                 
         if isinstance(detail_results, list):
@@ -306,9 +302,6 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
         if isinstance(outputs, list):
             outputs = "\n".join(outputs)
 
-        print("test input", inputs)
-        print("test output", outputs)
-        print("=" * 10)
         try:
             result = subprocess.run(['python', temp_program_path], input=inputs, text=True, capture_output=True, timeout=timeout)  
             exec_code = 999
@@ -318,7 +311,6 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
             print(e)
             exec_code = -2
 
-        print("BEFORE COMPARE", exec_code)
         if exec_code > 0:
             if result.returncode != 0:
                 try:
@@ -329,7 +321,6 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
                         exec_code = 1
                     else:
                         exec_code = 0
-                    print("MAIN PATH", exec_code)
                 except:
                     try:
                         inputs_tmp_file = 'input.txt'
@@ -341,7 +332,6 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
                             exec_code = 1
                         else:
                             exec_code = 0
-                        print("FIRST EXCEPT", exec_code)
                     except:
                         # print('!!!!!!!!!!!!!')
                         exec_code = -3
@@ -351,8 +341,6 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
             else:
                 exec_code = 0
         exec_results[i] = (exec_code==1, EXECUTION_RESULTS[exec_code] if exec_code>-3 else EXECUTION_RESULTS[exec_code].format(code=result.returncode))
-        print("exec results", EXECUTION_RESULTS[exec_code])
-        print("----")
         if exec_code >= 0:
             if debug:
                 print_debug_info(inputs=inputs, outputs=outputs, exec_outputs=result.stdout, exec_results=EXECUTION_RESULTS[exec_code])
@@ -380,9 +368,6 @@ def create_temp_file(content):
 
 def compare_std_results(exec_outputs, outputs, debug=False):
 
-    print("exec outputs", exec_outputs)
-    print("expected outputs", outputs)
-    print("=" * 5)
     if stripped_string_compare(exec_outputs, outputs):
         return True
     
