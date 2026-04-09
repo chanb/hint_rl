@@ -1,4 +1,4 @@
-### First time setup
+## First time setup
 Run with `uv`:
 ```
 # If uv isn't installed already
@@ -20,8 +20,8 @@ uv sync --extra cuda
 source <PATH_TO>/hint_rl/.venv/bin/activate
 ```
 
-### Datasets
-#### QuestA datasets
+## Datasets
+### QuestA datasets
 The `jsonl` files are stored in [here](https://huggingface.co/datasets/foreverlasting1202/QuestA/tree/main).
 The `make_hint_sweep.sh` file will create datasets with hints from 0% to 100%, with 10% increments, stored in `<PATH_TO>/datasets/questa/data/`:
 ```
@@ -37,7 +37,7 @@ cd <PATH_TO>/hint_rl/cc_scripts/datasets
 code_path=<PATH_TO>/hint_rl dataset_path=<PATH_TO>/datasets/questa ./make_hint_sweep.sh
 ```
 
-#### Hint RL dataset
+### Hint RL dataset
 Rather than fixing a particular %, we store the hints in a separate column and dynamically provide hints in training:
 ```
 cd <PATH_TO>/hint_rl/cc_scripts/datasets
@@ -57,7 +57,7 @@ python process.py --input=${dataset_path}/data/opencode-hint_sep.jsonl --output=
 python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/opencode_hint_sep
 ```
 
-### Run training
+## Training
 Run with `uv`:
 ```
 # Locally with GPUs, for example to train on QuestA math dataset:
@@ -67,20 +67,16 @@ python <PATH_TO>/hint_rl/cc_scripts/openmath_rl.py --config <PATH_TO>/hint_rl/cc
 sbatch <PATH_TO>/hint_rl/cc_scripts/slurm/train_*.sh
 ```
 
-#### Tuning guide
+### Tuning guide
 AReaL provides a [documentation](https://www.inclusion-ai.org/AReaL/en/best_practices/handling_oom.html) on tuning the hyperparameters for memory usage.
 Based on our tuning, `max_concurrent_rollouts` and `allocation_mode` are the most impactful.
 On L40s nodes we can have approximately 28 `max_concurent_rollouts` per GPU.
 The sweet spot on Vulcan seems to be two nodes for rollout and two nodes for training, e.g., `sglang:d2p1t1+fsdp:d2p1t1`.
 
-### Run evaluations
-Run with `uv`:
-```
-python <PATH_TO>/hint_rl/cc_scripts/eval_math.py --config <PATH_TO>/hint_rl/cc_scripts/configs/eval/eval_math.yaml
 
-# Slurm
-dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.sh
-```
+### Hint RL visualization
+Run `cc_scripts/plots/check_hint_change.ipynb` to plot out how the hint % changes over time.
+Run `cc_scripts/plots/check_hint_usefulness-trained.ipynb` to plot out the learning curve of the trained model---this requires running evaluation on some datasets.
 
 ### Tensorboard
 ```
@@ -89,10 +85,33 @@ Compute node $: tensorboard --logdir=. --host 0.0.0.0 --load_fast false
 Local $: ssh -N -f -L localhost:6007:<node_name>:6006 <username>@vulcan.alliancecan.ca
 ```
 
-### Hint RL changes
+
+## Evaluations
+Run with `uv`:
+```
+python <PATH_TO>/hint_rl/cc_scripts/eval_math.py --config <PATH_TO>/hint_rl/cc_scripts/configs/eval/eval_math.yaml
+
+# Slurm
+dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.sh
+```
+
+
+## Ablation experiments
+### Hint percentage
+```
+dat_file=<PATH_TO>/eval_configs-per_hint_percentage.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_math.sh
+```
+Plot with `cc_scripts/plots/check_hint_usefulness-per_hint_percentage.ipynb`
+
+### Hint usefulness per pretrained model
+```
+dat_file=<PATH_TO>/eval_configs-per_model.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_math.sh
+```
+Plot with `cc_scripts/plots/check_hint_usefulness-per_model.ipynb`
+
+## Hint RL code changes
 We implement dynamic hints by adding `areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow` and `areal.trainer.rl_trainer.CurriculumPPOTrainer`.
 The former adds partial hints based on `hint_percentage` of the question, and the latter keeps track of the `hint_percentage`.
 
-
-### TODO
+## TODO
 - Test code eval command: `python /home/chanb/research/hint_rl/hint_rl/cc_scripts/code_eval-with_hints.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-code.yaml trial_name=local_eval-test_code actor.path=nvidia/OpenReasoning-Nemotron-1.5B valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep`
