@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=aip-schuurma
-#SBATCH --time=23:59:00
+#SBATCH --time=01:00:00
 #SBATCH --mem=100GB
 #SBATCH --cpus-per-task=2
 #SBATCH --gres=gpu:4
@@ -12,4 +12,4 @@ module load python/3.10.13
 module load cuda/12.9
 source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
 
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_rl.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_hint_rl_grpo.yaml
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_rl.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_hint_rl.yaml

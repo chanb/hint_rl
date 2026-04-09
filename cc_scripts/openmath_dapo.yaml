@@ -1,9 +1,9 @@
 experiment_name: openmath-dapo
-trial_name: local_test-questa_50-bs_16-n_samples_4-max_new_token_12000
+trial_name: local_train
 
 seed: 1
 enable_offload: false
-total_train_epochs: 100
+total_train_epochs: 50
 tokenizer_path: ${actor.path}
 
 cluster:
@@ -14,16 +14,22 @@ cluster:
     type: nfs
     nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
 
-allocation_mode: sglang:d1p1t1+d1p1t1
+allocation_mode: sglang:d2p1t1+fsdp:d2
 
 scheduler:
   type: local
 
+dynamic_hint:
+  initial_hint: 0
+  goldilock_zone: [0.0, 1.0]
+  hint_delta: 0
+  dynamic_hint_schedule: null
+
 rollout:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  max_concurrent_rollouts: 128
-  queue_size: null
+  max_concurrent_rollouts: 48
+  queue_size: 128
   consumer_batch_size: ${train_dataset.batch_size}
   max_head_offpolicyness: 2
   enable_rollout_tracing: false
@@ -33,7 +39,7 @@ rollout:
   dump_to_file: true
 
 gconfig:
-  n_samples: 4
+  n_samples: 8
   min_new_tokens: 0
   max_new_tokens: 12000
   greedy: false
@@ -126,17 +132,16 @@ vllm:
 
 # datasets
 train_dataset:
-  batch_size: 4
+  batch_size: 128
   shuffle: true
   pin_memory: true
-  num_workers: 4
-  path: /home/chanb/scratch/datasets/questa/data/openr1_50
+  num_workers: 1
+  path: /home/chanb/scratch/datasets/questa/data/openr1_hint_sep
   type: rl
   split: train
   max_length: 4096
 
-valid_dataset:
-  null
+valid_dataset: null
 
 # Utilities
 saver:
@@ -144,7 +149,7 @@ saver:
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
   freq_epochs: 1
-  freq_steps: 100
+  freq_steps: null
   freq_secs: null
 
 recover:
@@ -160,7 +165,7 @@ evaluator:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
-  freq_epochs: 1
+  freq_epochs: null
   freq_steps: null
   freq_secs: null
 

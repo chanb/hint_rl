@@ -57,9 +57,12 @@ def make_data_extract_prompt_fn(hint_percentage: dict[str, Any]) -> Callable[[di
         if (
             "## Hint." not in messages[0]["content"]
             and "hint" in data
-            and hint_percentage.get(data["id"], 1.0) > 0.0
+            and hint_percentage.get(data["id"], hint_percentage["initial_hint"]) > 0
         ):
-            prefix, _ = split_prefix(data["hint"], hint_percentage.get(data["id"], 1.0))
+            prefix, _ = split_prefix(
+                data["hint"],
+                hint_percentage.get(data["id"], hint_percentage["initial_hint"]) / 100.0
+            )
 
             if "\nPlease reason step by step, and put your final answer within ```python\n...\n```." in messages[0]["content"]:
                 messages[0]["content"] = (

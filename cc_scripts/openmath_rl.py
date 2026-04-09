@@ -26,18 +26,6 @@ def main(args):
     )
 
     valid_dataset = None
-    eval_workflow = None
-    eval_workflow_kwargs = None
-    if config.valid_dataset is not None:
-        valid_dataset = get_custom_dataset(
-            split=config.valid_dataset.split,
-            dataset_config=config.valid_dataset,
-            tokenizer=tokenizer,
-        )
-
-        eval_workflow = "areal.workflow.rlvr.RLVRWorkflow"
-        eval_workflow_kwargs = workflow_kwargs.copy()
-        eval_workflow_kwargs["gconfig"] = config.gconfig.new(temperature=0.6)
 
     if config.dynamic_hint is None:
         print("Using PPOTrainer.")
@@ -49,8 +37,6 @@ def main(args):
             trainer.train(
                 workflow="areal.workflow.rlvr.RLVRWorkflow",
                 workflow_kwargs=workflow_kwargs,
-                eval_workflow=eval_workflow,
-                eval_workflow_kwargs=eval_workflow_kwargs,
                 dynamic_filter_fn=filter_always_fail_pass,
             )
     else:
@@ -61,7 +47,9 @@ def main(args):
             with open(hint_percentage_path, "rb") as f:
                 hint_percentage = pickle.load(f)
         else:
-            hint_percentage = dict()
+            hint_percentage = dict(
+                initial_hint=config.dynamic_hint.initial_hint
+            )
         workflow_kwargs["hint_percentage"] = hint_percentage
         print(workflow_kwargs)
 
@@ -73,8 +61,6 @@ def main(args):
             trainer.train(
                 workflow="areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow",
                 workflow_kwargs=workflow_kwargs,
-                eval_workflow=eval_workflow,
-                eval_workflow_kwargs=eval_workflow_kwargs,
                 dynamic_filter_fn=filter_always_fail_pass,
             )
 

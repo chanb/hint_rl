@@ -1062,6 +1062,7 @@ class CurriculumPPOTrainer(PPOTrainer):
         elif self._requires_proxy_workflow(workflow):
             self._ensure_proxy_started()
 
+        curr_hint_schedule = 0
         for global_step in range(start_step, max_steps):
             if (
                 config.total_train_steps is not None
@@ -1071,7 +1072,22 @@ class CurriculumPPOTrainer(PPOTrainer):
             epoch = global_step // steps_per_epoch
             step = global_step % steps_per_epoch
 
-            # Can possibly modify here to do dynamic sampling based on mask
+            if config.dynamic_hint_schedule is not None:
+                if global_step == config.dynamic_hint_schedule.change_steps[curr_hint_schedule]:
+                    workflow_kwargs["hint_percentage"]["initial_hint"] = (
+                        config.dynamic_hint_schedule.hint_percentages[curr_hint_schedule]
+                    )
+
+                    curr_hint_schedule = max(
+                        curr_hint_schedule,
+                        len(config.dynamic_hint_schedule.hint_percentages) - 1
+                    )
+
+                    logger.info("Hint schedule change {} at global step {}".format(
+                        config.dynamic_hint_schedule.hint_percentages[curr_hint_schedule],
+                        config.dynamic_hint_schedule.change_steps[curr_hint_schedule],
+                    ))
+
             with (
                 stats_tracker.record_timing("rollout"),
                 perf_tracer.trace_scope(
@@ -1091,27 +1107,33 @@ class CurriculumPPOTrainer(PPOTrainer):
                     group_size=config.gconfig.n_samples,
                     dynamic_bs=self.config.dynamic_bs,
                 )
-                ids = rollout_batch["id"].to_local()
-                rewards = rollout_batch["rewards"].to_local()
-                modified = False
-                for sample_id in torch.unique(ids):
-                    curr_id = int(sample_id)
-                    workflow_kwargs["hint_percentage"].setdefault(curr_id, 1.0)
-                    success_rate = torch.mean(rewards[ids == sample_id])
-                    if success_rate > config.dynamic_hint.goldilock_zone[1]:
-                        workflow_kwargs["hint_percentage"][curr_id] = max(
-                            workflow_kwargs["hint_percentage"][curr_id] - config.dynamic_hint.hint_delta,
-                            0.0,
+
+                # Update hint percentages
+                if config.dynamic_hint_schedule is None:
+                    ids = rollout_batch["id"].to_local()
+                    rewards = rollout_batch["rewards"].to_local()
+                    modified = False
+                    for sample_id in torch.unique(ids):
+                        curr_id = int(sample_id)
+                        workflow_kwargs["hint_percentage"].setdefault(
+                            curr_id,
+                            config.dynamic_hint.initial_hint,
                         )
-                        modified = True
-                    elif success_rate < config.dynamic_hint.goldilock_zone[0]:
-                        workflow_kwargs["hint_percentage"][curr_id] = min(
-                            workflow_kwargs["hint_percentage"][curr_id] + config.dynamic_hint.hint_delta,
-                            1.0,
-                        )
-                        modified = True
-                if modified:
-                    logger.info(f"Updated hint percentages: {workflow_kwargs['hint_percentage']}")
+                        success_rate = torch.mean(rewards[ids == sample_id])
+                        if success_rate > config.dynamic_hint.goldilock_zone[1]:
+                            workflow_kwargs["hint_percentage"][curr_id] = max(
+                                workflow_kwargs["hint_percentage"][curr_id] - config.dynamic_hint.hint_delta,
+                                0,
+                            )
+                            modified = True
+                        elif success_rate < config.dynamic_hint.goldilock_zone[0]:
+                            workflow_kwargs["hint_percentage"][curr_id] = min(
+                                workflow_kwargs["hint_percentage"][curr_id] + config.dynamic_hint.hint_delta,
+                                100,
+                            )
+                            modified = True
+                    if modified:
+                        logger.info(f"Updated hint percentages: {workflow_kwargs['hint_percentage']}")
 
             if self.critic is not None:
                 with (
