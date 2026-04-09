@@ -12,4 +12,4 @@ module load python/3.10.13
 module load cuda/12.9
 source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
 
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_rl.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/openmath_dapo.yaml
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_dapo.yaml

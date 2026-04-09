@@ -36,7 +36,6 @@ wget https://huggingface.co/datasets/codeparrot/apps/resolve/main/train.jsonl
 cd <PATH_TO>/hint_rl/cc_scripts/datasets
 code_path=<PATH_TO>/hint_rl dataset_path=<PATH_TO>/datasets/questa ./make_hint_sweep.sh
 ```
-NOTE: The QuestA datasets use 25% and 50% hints, you may change the script accordingly.
 
 #### Hint RL dataset
 Rather than fixing a particular %, we store the hints in a separate column and dynamically provide hints in training:
@@ -61,11 +60,11 @@ python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --o
 ### Run training
 Run with `uv`:
 ```
-# Test
-python <PATH_TO>/hint_rl/cc_scripts/openmath_rl.py --config <PATH_TO>/hint_rl/cc_scripts/openmath_questa_50_grpo.yaml
+# Locally with GPUs, for example to train on QuestA math dataset:
+python <PATH_TO>/hint_rl/cc_scripts/openmath_rl.py --config <PATH_TO>/hint_rl/cc_scripts/configs/train/openmath_hint_rl.yaml
 
-# Actual run with similar hyperparameters as QuestA
-python <PATH_TO>/hint_rl/cc_scripts/openmath_rl.py --config <PATH_TO>/hint_rl/cc_scripts/openmath_questa_50_grpo_slurm.yaml
+# Generally, to run with slurm:
+sbatch <PATH_TO>/hint_rl/cc_scripts/slurm/train_*.sh
 ```
 
 #### Tuning guide
@@ -77,10 +76,10 @@ The sweet spot on Vulcan seems to be two nodes for rollout and two nodes for tra
 ### Run evaluations
 Run with `uv`:
 ```
-python <PATH_TO>/hint_rl/cc_scripts/olympiad_bench_eval.py --config <PATH_TO>/hint_rl/cc_scripts/eval-questa_50.yaml
+python <PATH_TO>/hint_rl/cc_scripts/eval_math.py --config <PATH_TO>/hint_rl/cc_scripts/configs/eval/eval_math.yaml
 
 # Slurm
-dat_file=<PATH_TO>/eval_configs.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_questa.sh
+dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.sh
 ```
 
 ### Tensorboard
@@ -97,39 +96,3 @@ The former adds partial hints based on `hint_percentage` of the question, and th
 
 ### TODO
 - Test code eval command: `python /home/chanb/research/hint_rl/hint_rl/cc_scripts/code_eval-with_hints.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-code.yaml trial_name=local_eval-test_code actor.path=nvidia/OpenReasoning-Nemotron-1.5B valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep`
-
-### (Deprecated) OLD SETUP WITH APPTAINER
-To build apptainer for CC:
-```
-module load StdEnv/2023
-module load python/3.10.13
-module load cuda/12.9
-module load apptainer/1.4.5
-export APPTAINER_CACHEDIR=~/scratch
-apptainer build ~/scratch/questa.sif docker://ghcr.io/inclusionai/areal-runtime:v1.0.1
-```
-
-Run the apptainer interactively:
-```
-module load StdEnv/2023
-module load python/3.10.13
-module load cuda/12.9
-module load apptainer/1.4.5
-
-apptainer run --nv -C -W $SLURM_TMPDIR -B ~/research/hint_rl:/workspace -B ~/scratch/datasets:/datasets -B ~/scratch/hint_rl_results:/hint_rl_results --writable-tmpfs ~/scratch/questa.sif
-
-cd /workspace/hint_rl
-uv pip install --no-deps -e .
-uv pip install ipdb
-```
-
-Run code:
-```
-# Local scheduler
-cd /workspace/hint_rl
-python3 cc_scripts/openmath_rl.py --config cc_scripts/openmath_questa_50_grpo.yaml scheduler.type=local
-
-# Ray scheduler
-ray start --head --disable-usage-stats
-python3 cc_scripts/openmath_rl.py --config cc_scripts/openmath_questa_50_grpo.yaml scheduler.type=ray
-```

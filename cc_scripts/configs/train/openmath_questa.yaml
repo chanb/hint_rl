@@ -1,30 +1,40 @@
-experiment_name: openmath-dapo
-trial_name: test_local-eval
+experiment_name: openmath-questa
+trial_name: local_train
 
 seed: 1
 enable_offload: false
-total_train_epochs: 100
+total_train_epochs: 50
 tokenizer_path: ${actor.path}
 
 cluster:
   n_nodes: 1
-  n_gpus_per_node: 1
+  n_gpus_per_node: 4
   fileroot: /home/chanb/scratch/hint_rl_results
   name_resolve:
     type: nfs
     nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
 
-allocation_mode: sglang:d1p1t1
+allocation_mode: sglang:d2p1t1+fsdp:d2
 
 scheduler:
   type: local
 
+dynamic_hint:
+  initial_hint: 50
+  goldilock_zone: [0.0, 1.0]
+  hint_delta: 0
+  dynamic_hint_schedule:
+    hint_percentages: [25]
+    change_steps: [100]
+
 rollout:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  max_concurrent_rollouts: 16
-  queue_size: null
-  consumer_batch_size: ${valid_dataset.batch_size}
+  max_concurrent_rollouts: 48
+  queue_size: 128
+  consumer_batch_size: ${train_dataset.batch_size}
+  max_head_offpolicyness: 2
+  enable_rollout_tracing: false
   scheduling_spec: ${actor.scheduling_spec}
   fileroot: ${cluster.fileroot}
   tokenizer_path: ${tokenizer_path}
@@ -35,14 +45,45 @@ gconfig:
   min_new_tokens: 0
   max_new_tokens: 12000
   greedy: false
-  temperature: 0.7
+  temperature: 1.0
 
 actor:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
   path: nvidia/OpenMath-Nemotron-1.5B
   init_from_scratch: false
+  disable_dropout: true
+  gradient_checkpointing: true
   dtype: bfloat16
+  mb_spec:
+    max_tokens_per_mb: 16384
+  optimizer:
+    type: adam
+    lr: 2e-5
+    weight_decay: 0.05
+    beta1: 0.9
+    beta2: 0.95
+    eps: 1e-05
+    lr_scheduler_type: constant
+    gradient_clipping: 1.0
+    warmup_steps_proportion: 0.001
+  eps_clip: 0.2
+  temperature: ${gconfig.temperature}
+  reward_scaling: 5.0
+  reward_bias: 0.0
+  kl_ctl: 0.0
+  ppo_n_minibatches: 1
+  recompute_logprob: true
+  use_decoupled_loss: true
+  behave_imp_weight_cap: 5.0
+  reward_norm:
+    mean_level: group
+    std_level: group
+    group_size: ${gconfig.n_samples}
+  adv_norm:
+    mean_level: batch
+    std_level: batch
+  weight_update_mode: xccl
   max_new_tokens: ${gconfig.max_new_tokens}
   scheduling_spec:
     - task_type: worker
@@ -58,6 +99,21 @@ actor:
         - module load cuda/12.9
         - source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
 
+ref:
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  path: ${actor.path}
+  init_from_scratch: false
+  disable_dropout: true
+  dtype: ${actor.dtype}
+  mb_spec:
+    max_tokens_per_mb: 16384
+  optimizer: null
+  scheduling_strategy:
+    type: colocation
+    target: actor
+  scheduling_spec: ${actor.scheduling_spec}
+
 # SGLang
 sglang:
   model_path: ${actor.path}
@@ -65,37 +121,29 @@ sglang:
   skip_tokenizer_init: true
   dtype: ${actor.dtype}
   max_running_requests: null
-  context_length: 32768 
-  mem_fraction_static: 0.9
+  context_length: 32768
+  mem_fraction_static: 0.8
 
 vllm:
   model: ${actor.path}
   seed: ${seed}
   skip_tokenizer_init: false
   dtype: ${actor.dtype}
-  max_model_len: 32768 
-  gpu_memory_utilization: 0.9
+  max_model_len: 32768
+  gpu_memory_utilization: 0.8
 
 # datasets
 train_dataset:
-  batch_size: 1
+  batch_size: 128
   shuffle: true
   pin_memory: true
   num_workers: 1
-  path: /home/chanb/scratch/datasets/questa/opencode_hint_sep
+  path: /home/chanb/scratch/datasets/questa/data/openr1_hint_sep
   type: rl
-  max_length: 4096
   split: train
-  
-valid_dataset:
-  batch_size: 1
-  pin_memory: true
-  num_workers: 2
-  path: test_local
-  type: rl
   max_length: 4096
-  split: train
 
+valid_dataset: null
 
 # Utilities
 saver:
@@ -103,7 +151,7 @@ saver:
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
   freq_epochs: 1
-  freq_steps: 100
+  freq_steps: null
   freq_secs: null
 
 recover:
@@ -119,7 +167,7 @@ evaluator:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
-  freq_epochs: 1
+  freq_epochs: null
   freq_steps: null
   freq_secs: null
 
