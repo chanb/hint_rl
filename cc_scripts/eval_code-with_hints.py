@@ -85,8 +85,10 @@ def main(args):
             gconfig=config.gconfig,
             tokenizer=config.tokenizer_path,
             enable_thinking=False,
+            hint_percentage=dict(
+                initial_hint=50
+            ),
         )
-        workflow_kwargs["hint_percentage"]["initial_hint"] = 50
 
         rollout_dir = os.path.join(
             StatsLogger.get_log_path(
