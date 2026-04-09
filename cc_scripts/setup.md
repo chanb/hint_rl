@@ -96,7 +96,7 @@ The former adds partial hints based on `hint_percentage` of the question, and th
 
 
 ### TODO
-- Test code eval command: `python /home/chanb/research/hint_rl/hint_rl/cc_scripts/code_eval.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-code.yaml trial_name=local_eval-test_code actor.path=nvidia/OpenReasoning-Nemotron-1.5B valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep`
+- Test code eval command: `python /home/chanb/research/hint_rl/hint_rl/cc_scripts/code_eval-with_hints.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-code.yaml trial_name=local_eval-test_code actor.path=nvidia/OpenReasoning-Nemotron-1.5B valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep`
 
 ### (Deprecated) OLD SETUP WITH APPTAINER
 To build apptainer for CC:
