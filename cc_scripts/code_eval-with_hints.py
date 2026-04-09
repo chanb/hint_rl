@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 
@@ -104,13 +105,14 @@ def main(args):
                 if os.path.isfile(f"{rollout_dir}/{cnt}.jsonl"):
                     logger.info(f"Skipping {cnt}")
                 else:
-                    workflow_kwargs["hint_percentage"] = {
+                    copy_workflow_kwargs = copy.deepcopy(workflow_kwargs)
+                    copy_workflow_kwargs["hint_percentage"] = {
                         item["id"]: 0.5,
                     }
                     eval_rollout.submit(
                         item,
                         workflow=workflow,
-                        workflow_kwargs=workflow_kwargs,
+                        workflow_kwargs=copy_workflow_kwargs,
                         group_size=config.gconfig.n_samples,
                         task_id=cnt,
                     )
