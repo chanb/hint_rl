@@ -1078,7 +1078,7 @@ class CurriculumPPOTrainer(PPOTrainer):
                         config.dynamic_hint.dynamic_hint_schedule.hint_percentages[curr_hint_schedule]
                     )
 
-                    curr_hint_schedule = max(
+                    curr_hint_schedule = min(
                         curr_hint_schedule + 1,
                         len(config.dynamic_hint.dynamic_hint_schedule.hint_percentages) - 1
                     )
