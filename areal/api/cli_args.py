@@ -2187,17 +2187,45 @@ class TeacherConfig(PPOActorConfig):
     )
 
 
+
+
+@dataclass
+class DynamicHintScheduleConfig:
+    """Configuration for dynamic hint schedule conditioning in PPO training."""
+
+    hint_percentages: list[int] = field(
+        default_factory=list,
+        metadata={"help": "The hint % to switch to."},
+    )
+    change_steps: list[int] = field(
+        default_factory=list,
+        metadata={"help": "The global steps to change hint %."},
+    )
+
+
 @dataclass
 class DynamicHintConfig:
     """Configuration for dynamic hint conditioning in PPO training."""
 
+    initial_hint: int = field(
+        default=0,
+        metadata={"help": "The initial hint percentage for all samples."},
+    )
     goldilock_zone: list[float] = field(
         default_factory=list,
         metadata={"help": "The range [p_1, p_2] to determine when to change the hint %."},
     )
-    hint_delta: float = field(
-        default=0.0,
+    hint_delta: int = field(
+        default=0,
         metadata={"help": "The amount of hint percentage change when the reward is outside the goldilock zone."},
+    )
+    dynamic_hint_schedule: DynamicHintScheduleConfig | None = field(
+        default=None,
+        metadata={
+            "help": (
+                "Optional hint scheduling"
+            )
+        },
     )
 
 

@@ -22,7 +22,7 @@ from areal.utils.perf_tracer import (
     trace_session,
 )
 
-logger = logging.getLogger("RLVRWorkflow")
+logger = logging.getLogger("DynamicHintRLVRWorkflow")
 
 
 def default_get_input_ids_fn(
@@ -57,14 +57,25 @@ def make_data_extract_prompt_fn(hint_percentage: dict[str, Any]) -> Callable[[di
         if (
             "## Hint." not in messages[0]["content"]
             and "hint" in data
-            and hint_percentage.get(data["id"], 1.0) > 0.0
+            and hint_percentage.get(data["id"], hint_percentage["initial_hint"]) > 0
         ):
-            prefix, _ = split_prefix(data["hint"], hint_percentage.get(data["id"], 1.0))
-            messages[0]["content"] = (
-                messages[0]["content"].split(
-                    "\nPlease reason step by step, and put your final answer within \\boxed{}."
-                )[0] + '\n\n' + '## Hint.' + prefix + "\nPlease reason step by step, and put your final answer within \\boxed{}."
+            prefix, _ = split_prefix(
+                data["hint"],
+                hint_percentage.get(data["id"], hint_percentage["initial_hint"]) / 100.0
             )
+
+            if "\nPlease reason step by step, and put your final answer within ```python\n...\n```." in messages[0]["content"]:
+                messages[0]["content"] = (
+                    messages[0]["content"].split(
+                        "\nPlease reason step by step, and put your final answer within ```python\n...\n```."
+                    )[0] + '\n\n' + '## Hint.' + prefix + "\nPlease reason step by step, and put your final answer within ```python\n...\n```."
+                )
+            elif "\nPlease reason step by step, and put your final answer within \\boxed{}." in messages[0]["content"]:
+                messages[0]["content"] = (
+                    messages[0]["content"].split(
+                        "\nPlease reason step by step, and put your final answer within \\boxed{}."
+                    )[0] + '\n\n' + '## Hint.' + prefix + "\nPlease reason step by step, and put your final answer within \\boxed{}."
+                )
         return messages
     return data_extract_prompt_fn
 

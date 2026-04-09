@@ -1,0 +1,6 @@
+export trial_name=local_eval-questa_with_hint actor_path=nvidia/OpenMath-Nemotron-1.5B dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_50
+export trial_name=local_eval-questa_no_hint actor_path=nvidia/OpenMath-Nemotron-1.5B dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_0
+export trial_name=local_eval-deepscaler_with_hint actor_path=agentica-org/DeepScaleR-1.5B-Preview dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_50
+export trial_name=local_eval-deepscaler_no_hint actor_path=agentica-org/DeepScaleR-1.5B-Preview dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_0
+export trial_name=local_eval-qwen_with_hint actor_path=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_50
+export trial_name=local_eval-qwen_no_hint actor_path=deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B dataset_path=/home/chanb/scratch/datasets/questa/data/openr1_0

@@ -1,7 +1,12 @@
+import json
+import multiprocessing
+import re
+
 from math_verify.metric import math_metric
 from math_verify.parser import ExprExtractionConfig, LatexExtractionConfig
 
 from areal.utils import logging
+from areal.utils.pytest_util import run_test
 
 logger = logging.getLogger("RewardUtils")
 
@@ -66,8 +71,56 @@ class MathVerifyWorker:
             )
             return 0.0
 
+class CodeVerifyWorker:
+    """A Python code verifier
+    """
+
+    def __init__(self, debug=False):
+        def check_correctness(test_cases, generation):
+            """Check correctness of code generation with a global timeout.
+            The global timeout is to catch some extreme/rare cases not handled by the timeouts
+            inside `run_test`"""
+            def _temp_run(test_cases, generation, debug, result):
+                result.append(run_test(test_cases, test=generation, debug=debug))
+
+            pattern = r"```python\s*\r?\n(.*?)\r?\n```"
+            codes = [block.strip() for block in re.findall(pattern, generation, re.DOTALL)]
+
+            if len(codes) == 0:
+                logger.info("no code found")
+                return [False]
+
+            generation = codes[0]
+
+            manager = multiprocessing.Manager()
+            result = manager.list()
+            in_outs = json.loads(test_cases)
+            p = multiprocessing.Process(target=_temp_run, args=(in_outs, generation, debug, result))
+            p.start()
+            p.join()
+            if p.is_alive():
+                p.kill()
+            if not result:
+                # consider that all tests failed
+                result = [[-1 for i in range(len(in_outs["inputs"]))]]
+                logger.debug(f"global timeout")
+            return result[0]
+        self.verify_func = check_correctness
+
+    def verify(self, response: str, test_cases: str) -> float:
+        try:
+            ret_score = self.verify_func(test_cases, response)
+            return float(all(ret_score))
+        except Exception:
+            logger.warning(
+                f"Exception in CodeVerifyWorker.verify for response={response} and test_cases={test_cases}",
+                exc_info=True,
+            )
+            return 0.0
+
 
 _MATH_VERIFY_WORKER: MathVerifyWorker | None = None
+_CODE_VERIFY_WORKER: CodeVerifyWorker | None = None
 
 
 def get_math_verify_worker() -> MathVerifyWorker:
@@ -76,15 +129,24 @@ def get_math_verify_worker() -> MathVerifyWorker:
         _MATH_VERIFY_WORKER = MathVerifyWorker()
     return _MATH_VERIFY_WORKER
 
+def get_code_verify_worker() -> CodeVerifyWorker:
+    global _CODE_VERIFY_WORKER
+    if _CODE_VERIFY_WORKER is None:
+        _CODE_VERIFY_WORKER = CodeVerifyWorker()
+    return _CODE_VERIFY_WORKER
+
 
 __all__ = [
     "VALID_REWARD_FN",
     "get_custom_reward_fn",
     "MathVerifyWorker",
+    "CodeVerifyWorker",
     "get_math_verify_worker",
+    "get_code_verify_worker",
     "gsm8k_reward_fn",
     "geometry3k_reward_fn",
     "clevr_count_70k_reward_fn",
+    "opencode_reward_fn",
 ]
 
 
@@ -92,6 +154,7 @@ _LAZY_IMPORTS = {
     "gsm8k_reward_fn": "areal.reward.gsm8k",
     "geometry3k_reward_fn": "areal.reward.geometry3k",
     "clevr_count_70k_reward_fn": "areal.reward.clevr_count_70k",
+    "opencode_reward_fn": "areal.reward.opencode",
 }
 
 

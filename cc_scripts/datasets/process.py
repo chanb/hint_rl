@@ -19,5 +19,8 @@ if __name__ == "__main__":
             if 'hint' in data:
                 new_data['hint'] = data['hint']
 
+            if 'test_cases' in data:
+                new_data['test_cases'] = data['test_cases']
+
             with open(args.output, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(new_data, ensure_ascii=False) + '\n')

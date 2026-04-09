@@ -1,14 +1,14 @@
-experiment_name: openmath-dapo
-trial_name: local_train-hint_rl
+experiment_name: openmath-hint_rl
+trial_name: local_train
 
 seed: 1
 enable_offload: false
-total_train_epochs: 100
+total_train_epochs: 50
 tokenizer_path: ${actor.path}
 
 cluster:
   n_nodes: 1
-  n_gpus_per_node: 2
+  n_gpus_per_node: 4
   fileroot: /home/chanb/scratch/hint_rl_results
   name_resolve:
     type: nfs
@@ -20,8 +20,10 @@ scheduler:
   type: local
 
 dynamic_hint:
+  initial_hint: 100
   goldilock_zone: [0.5, 0.75]
-  hint_delta: 0.1
+  hint_delta: 10
+  dynamic_hint_schedule: null
 
 rollout:
   experiment_name: ${experiment_name}
@@ -147,7 +149,7 @@ saver:
   trial_name: ${trial_name}
   fileroot: ${cluster.fileroot}
   freq_epochs: 1
-  freq_steps: 4
+  freq_steps: null
   freq_secs: null
 
 recover:

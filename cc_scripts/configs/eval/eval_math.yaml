@@ -1,4 +1,4 @@
-experiment_name: openmath-dapo
+experiment_name: eval-math
 trial_name: test_local-eval
 
 seed: 1
@@ -77,15 +77,7 @@ vllm:
   gpu_memory_utilization: 0.9
 
 # datasets
-train_dataset:
-  batch_size: 1
-  shuffle: true
-  pin_memory: true
-  num_workers: 1
-  path: /home/chanb/scratch/datasets/questa/openr1_50
-  type: rl
-  max_length: 4096
-  split: train
+train_dataset: null
   
 valid_dataset:
   batch_size: 1

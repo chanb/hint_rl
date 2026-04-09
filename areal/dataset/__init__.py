@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 VALID_DATASETS = [
+    "opencode",
     "gsm8k",
     "clevr_count_70k",
     "geometry3k",
@@ -57,6 +58,16 @@ def _get_custom_dataset(
         from .gsm8k import get_openmath_rl_dataset
 
         return get_openmath_rl_dataset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "opencode" in path and type == "rl":
+        from .opencode import get_opencode_rl_dataset
+
+        return get_opencode_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,

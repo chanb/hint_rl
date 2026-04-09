@@ -47,8 +47,8 @@ $(sed -n "${i}p" < "$DAT_FILE")
 echo "Task index: $i"
 echo "Running on hostname \$(hostname)"
 
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/olympiad_bench_eval.py \
-  --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-questa_50.yaml \
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval_math.py \
+  --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/eval/eval_math.yaml \
   trial_name=\${trial_name} \
   actor.path=\${actor_path} \
   valid_dataset.path=\${dataset_path}
