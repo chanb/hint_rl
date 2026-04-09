@@ -2,7 +2,7 @@
 #SBATCH --account=aip-schuurma
 #SBATCH --time=01:00:00
 #SBATCH --mem=100GB
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:4
 #SBATCH --array=1-1
 #SBATCH --output=/home/chanb/scratch/logs/hint_rl/%j.out

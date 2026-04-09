@@ -1072,20 +1072,20 @@ class CurriculumPPOTrainer(PPOTrainer):
             epoch = global_step // steps_per_epoch
             step = global_step % steps_per_epoch
 
-            if config.dynamic_hint_schedule is not None:
-                if global_step == config.dynamic_hint_schedule.change_steps[curr_hint_schedule]:
+            if config.dynamic_hint.dynamic_hint_schedule is not None:
+                if global_step == config.dynamic_hint.dynamic_hint_schedule.change_steps[curr_hint_schedule]:
                     workflow_kwargs["hint_percentage"]["initial_hint"] = (
-                        config.dynamic_hint_schedule.hint_percentages[curr_hint_schedule]
+                        config.dynamic_hint.dynamic_hint_schedule.hint_percentages[curr_hint_schedule]
                     )
 
                     curr_hint_schedule = max(
                         curr_hint_schedule,
-                        len(config.dynamic_hint_schedule.hint_percentages) - 1
+                        len(config.dynamic_hint.dynamic_hint_schedule.hint_percentages) - 1
                     )
 
                     logger.info("Hint schedule change {} at global step {}".format(
-                        config.dynamic_hint_schedule.hint_percentages[curr_hint_schedule],
-                        config.dynamic_hint_schedule.change_steps[curr_hint_schedule],
+                        config.dynamic_hint.dynamic_hint_schedule.hint_percentages[curr_hint_schedule],
+                        config.dynamic_hint.dynamic_hint_schedule.change_steps[curr_hint_schedule],
                     ))
 
             with (
@@ -1109,7 +1109,7 @@ class CurriculumPPOTrainer(PPOTrainer):
                 )
 
                 # Update hint percentages
-                if config.dynamic_hint_schedule is None:
+                if config.dynamic_hint.dynamic_hint_schedule is None:
                     ids = rollout_batch["id"].to_local()
                     rewards = rollout_batch["rewards"].to_local()
                     modified = False
