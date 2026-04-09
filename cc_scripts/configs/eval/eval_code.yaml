@@ -77,7 +77,15 @@ vllm:
   gpu_memory_utilization: 0.9
 
 # datasets
-train_dataset: null
+train_dataset: 
+  batch_size: 128
+  shuffle: true
+  pin_memory: true
+  num_workers: 1
+  path: unused
+  type: rl
+  split: train
+  max_length: 4096
   
 valid_dataset:
   batch_size: 1

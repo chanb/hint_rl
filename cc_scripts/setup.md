@@ -57,6 +57,12 @@ python process.py --input=${dataset_path}/data/opencode-hint_sep.jsonl --output=
 python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/opencode_hint_sep
 ```
 
+For open code we do extra filtering which evaluates nvidia/OpenReasoning-Nemotron-1.5B on the dataset
+```
+sbatch eval_code-with_hints.sh
+# TODO
+```
+
 ## Training
 Run with `uv`:
 ```
@@ -137,6 +143,3 @@ We implement dynamic hints by adding `areal.workflow.dynamic_hint_rlvr.DynamicHi
 The former adds partial hints based on `hint_percentage` of the question, and the latter keeps track of the `hint_percentage`.
 
 To include code domains, we added `CodeVerifyWorker` under `areal.reward`, as well as `areal.utils.pyext2` and `areal.utils.pytest_util` which we imported from the [TACO repository](https://github.com/FlagOpen/TACO).
-
-## TODO
-- Test code eval command: `python /home/chanb/research/hint_rl/hint_rl/cc_scripts/code_eval-with_hints.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-code.yaml trial_name=local_eval-test_code actor.path=nvidia/OpenReasoning-Nemotron-1.5B valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep`
