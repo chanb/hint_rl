@@ -1,7 +1,7 @@
 from datasets import load_dataset, load_from_disk
 
 
-def get_codeforce_rl_dataset(
+def get_opencode_rl_dataset(
     path: str,
     split: str,
     tokenizer,

@@ -1,3 +1,4 @@
+import json
 import multiprocessing
 
 from math_verify.metric import math_metric
@@ -74,36 +75,35 @@ class CodeVerifyWorker:
     """
 
     def __init__(self, debug=False):
-        def check_correctness(sample, generation):
+        def check_correctness(test_cases, generation):
             """Check correctness of code generation with a global timeout.
             The global timeout is to catch some extreme/rare cases not handled by the timeouts
             inside `run_test`"""
-            def _temp_run(sample, generation, debug, result):
-                result.append(run_test(sample, test=generation, debug=debug))
+            def _temp_run(test_cases, generation, debug, result):
+                result.append(run_test(test_cases, test=generation, debug=debug))
 
             manager = multiprocessing.Manager()
             result = manager.list()
-            p = multiprocessing.Process(target=_temp_run, args=(sample, generation, debug, result))
+            in_outs = json.loads(test_cases)
+            p = multiprocessing.Process(target=_temp_run, args=(in_outs, generation, debug, result))
             p.start()
             p.join()
             if p.is_alive():
                 p.kill()
             if not result:
-                in_outs = sample["public_tests"]
                 # consider that all tests failed
-                result = [[-1 for i in range(len(in_outs["input"]))]]
-                if debug:
-                    print(f"global timeout")
+                result = [[-1 for i in range(len(in_outs["inputs"]))]]
+                logger.debug(f"global timeout")
             return result[0]
         self.verify_func = check_correctness
 
-    def verify(self, response: str, sample: dict) -> float:
+    def verify(self, response: str, test_cases: str) -> float:
         try:
-            ret_score = self.verify_func(sample, [response])
+            ret_score = self.verify_func(test_cases, response)
             return float(all(ret_score))
         except Exception:
             logger.warning(
-                f"Exception in CodeVerifyWorker.verify for response={response} and sample={sample}",
+                f"Exception in CodeVerifyWorker.verify for response={response} and test_cases={test_cases}",
                 exc_info=True,
             )
             return 0.0

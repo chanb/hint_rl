@@ -11,7 +11,8 @@ from typing import Dict
 from tqdm import tqdm
 
 
-MAX_TOKENS = 24000
+MAX_TOKENS = 36000
+MAX_TESTS = 20
 
 
 def check_correctness(sample, generation, debug=True):
@@ -53,8 +54,8 @@ def main():
 
     ds = load_dataset("open-r1/OpenThoughts-114k-Code_decontaminated", split="train")
     for sample_i, sample in tqdm(enumerate(ds)):
-        if not sample["source"] not in ["codeforces", "code_contests"]:
-            continue
+        # if not sample["source"] not in ["codeforces", "code_contests"]:
+        #     continue
 
         if not sample["test_cases"]:
             continue
@@ -64,6 +65,12 @@ def main():
 
         deepseek_solution = sample["deepseek_solution"]
         if "```python" not in deepseek_solution:
+            continue
+
+        test_cases = sample["test_cases"]
+        sample["test_cases"] = json.loads(sample["test_cases"])
+
+        if len(sample["test_cases"]["inputs"]) > MAX_TESTS:
             continue
 
         try:
@@ -80,10 +87,8 @@ def main():
             hint = hint_solution_split[0]
             accepted_solution = hint_solution_split[1].split("```")[0]
 
-        test_cases = sample["test_cases"]
-        sample["test_cases"] = json.loads(sample["test_cases"])
-
         if not all(check_correctness(sample, accepted_solution, debug=False)):
+            print("FAILED")
             continue
 
         if hint[0] == "\"":

@@ -94,6 +94,10 @@ Local $: ssh -N -f -L localhost:6007:<node_name>:6006 <username>@vulcan.alliance
 We implement dynamic hints by adding `areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow` and `areal.trainer.rl_trainer.CurriculumPPOTrainer`.
 The former adds partial hints based on `hint_percentage` of the question, and the latter keeps track of the `hint_percentage`.
 
+
+### TODO
+- Test code eval command: `python /home/chanb/research/hint_rl/hint_rl/cc_scripts/code_eval.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-code.yaml trial_name=local_eval-test_code actor.path=nvidia/OpenReasoning-Nemotron-1.5B valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep`
+
 ### (Deprecated) OLD SETUP WITH APPTAINER
 To build apptainer for CC:
 ```

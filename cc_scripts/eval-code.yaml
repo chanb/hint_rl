@@ -1,0 +1,141 @@
+experiment_name: openmath-dapo
+trial_name: test_local-eval
+
+seed: 1
+enable_offload: false
+total_train_epochs: 100
+tokenizer_path: ${actor.path}
+
+cluster:
+  n_nodes: 1
+  n_gpus_per_node: 4
+  fileroot: /home/chanb/scratch/hint_rl_results
+  name_resolve:
+    type: nfs
+    nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
+
+allocation_mode: sglang:d1p1t1
+
+scheduler:
+  type: local
+
+rollout:
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  max_concurrent_rollouts: 24
+  queue_size: null
+  consumer_batch_size: ${valid_dataset.batch_size}
+  scheduling_spec: ${actor.scheduling_spec}
+  fileroot: ${cluster.fileroot}
+  tokenizer_path: ${tokenizer_path}
+  dump_to_file: true
+
+gconfig:
+  n_samples: 8
+  min_new_tokens: 0
+  max_new_tokens: 12000
+  greedy: false
+  temperature: 0.7
+
+actor:
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  path: nvidia/OpenMath-Nemotron-1.5B
+  init_from_scratch: false
+  dtype: bfloat16
+  max_new_tokens: ${gconfig.max_new_tokens}
+  scheduling_spec:
+    - task_type: worker
+      port_count: 2
+      gpu: 1
+      mem: 32
+      cmd: python3 -m areal.infra.rpc.rpc_server
+      container_type: none
+      env_vars: {}
+      additional_bash_cmds:
+        - module load StdEnv/2023
+        - module load python/3.10.13
+        - module load cuda/12.9
+        - source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
+
+# SGLang
+sglang:
+  model_path: ${actor.path}
+  random_seed: ${seed}
+  skip_tokenizer_init: true
+  dtype: ${actor.dtype}
+  max_running_requests: null
+  context_length: 32768 
+  mem_fraction_static: 0.9
+
+vllm:
+  model: ${actor.path}
+  seed: ${seed}
+  skip_tokenizer_init: false
+  dtype: ${actor.dtype}
+  max_model_len: 32768 
+  gpu_memory_utilization: 0.9
+
+# datasets
+train_dataset:
+  batch_size: 1
+  shuffle: true
+  pin_memory: true
+  num_workers: 1
+  path: /home/chanb/scratch/datasets/questa/opencode_hint_sep
+  type: rl
+  max_length: 4096
+  split: train
+  
+valid_dataset:
+  batch_size: 1
+  pin_memory: true
+  num_workers: 4
+  path: test_local
+  type: rl
+  max_length: 4096
+  split: train
+
+
+# Utilities
+saver:
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  fileroot: ${cluster.fileroot}
+  freq_epochs: 1
+  freq_steps: 100
+  freq_secs: null
+
+recover:
+  mode: disabled
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  fileroot: ${cluster.fileroot}
+  freq_epochs: 1
+  freq_steps: null
+  freq_secs: 3600
+
+evaluator:
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  fileroot: ${cluster.fileroot}
+  freq_epochs: 1
+  freq_steps: null
+  freq_secs: null
+
+stats_logger:
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  fileroot: ${cluster.fileroot}
+  wandb:
+    mode: disabled
+  tensorboard:
+    path: /home/chanb/scratch/hint_rl_results/logs/tensorboard
+
+perf_tracer:
+  experiment_name: ${experiment_name}
+  trial_name: ${trial_name}
+  fileroot: ${cluster.fileroot}
+  enabled: false
+  session_tracer:
+    enabled: false

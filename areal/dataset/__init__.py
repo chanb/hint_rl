@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 VALID_DATASETS = [
-    "codeforce",
+    "opencode",
     "gsm8k",
     "clevr_count_70k",
     "geometry3k",

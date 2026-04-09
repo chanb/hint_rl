@@ -1,7 +1,6 @@
 # modifed from https://github.com/hendrycks/apps/blob/main/eval/testing_util.py to fix some evaluation bugs and add instructions
 
 from areal.utils.pyext2 import RuntimeModule
-import signal
 import numpy as np
 
 # used for debugging to time steps
@@ -19,21 +18,12 @@ class CODE_TYPE(Enum):
     call_based = 0
     standard_input = 1
 
-# to run the solution files we're using a timing based approach
-import signal
-# stuff for setting up signal timer
-class TimeoutException(Exception):
-    pass
-def timeout_handler(signum, frame):
-    print("alarm went off")
-    #return
-    raise TimeoutException
-signal.signal(signal.SIGALRM, timeout_handler)
-TIMEOUT = 4  # seconds
+TIMEOUT = 1  # seconds
+# TIMEOUT = 4  # seconds
 
 EXECUTION_RESULTS = {1: "passed", 0: "false", -1: "timeout", -2: "runtime_error", -3: "returncode:{code}", -4: "compile_error"}
 
-def run_test(sample, test=None, debug=False):
+def run_test(in_outs, test=None, debug=False):
     """
     if test(generated_code) is not None it'll try to run the code.
     otherwise it'll just return an input and output pair.
@@ -41,11 +31,6 @@ def run_test(sample, test=None, debug=False):
     
     if debug:
         print(f"start = {datetime.now().time()}")
-
-    try:
-        in_outs = sample["test_cases"]
-    except ValueError:
-        in_outs = None
     
     if in_outs:
         if in_outs.get("fn_name") is None:
@@ -83,13 +68,13 @@ def run_test(sample, test=None, debug=False):
             return results
         else:
             if which_type == CODE_TYPE.call_based:  # Call-based
-                detail_results, debug_infos = execute_cb_code(method_func, inputs_list, outputs_list, timeout=TIMEOUT, early_stop=False, debug=debug)
+                detail_results, debug_infos = execute_cb_code(method_func, inputs_list, outputs_list, timeout=TIMEOUT, early_stop=True, debug=debug)
             elif which_type == CODE_TYPE.standard_input:
-                detail_results = execute_std_code(exec_code, inputs_list, outputs_list, timeout=TIMEOUT, early_stop=False, debug=debug)
+                detail_results = execute_std_code(exec_code, inputs_list, outputs_list, timeout=TIMEOUT, early_stop=True, debug=debug)
                 debug_infos = detail_results.get('debug', None)
                 detail_results = {k:v for k, v in detail_results.items() if k!='debug'}
                 if set(detail_results.values()) == {(False, 'returncode:1')}:
-                    detail_results = execute_std_code(synthesized_code+'\ncode()\n', inputs_list, outputs_list, timeout=TIMEOUT, early_stop=False, debug=debug)
+                    detail_results = execute_std_code(synthesized_code+'\ncode()\n', inputs_list, outputs_list, timeout=TIMEOUT, early_stop=True, debug=debug)
                 
         if isinstance(detail_results, list):
             if len(detail_results) == 1:
@@ -129,20 +114,16 @@ def process_input_output(inputs, outputs):
     return inputs, outputs
 
 def compile_and_get_func(program, which_type, method_name, timeout, debug):
-    signal.alarm(timeout)
     try:
         tmp_sol = RuntimeModule.from_string("tmp_sol", "", program)
         if which_type == CODE_TYPE.call_based and "class Solution" in program:
             tmp = tmp_sol.Solution()
         else:
             tmp = tmp_sol
-        signal.alarm(0)
     except Exception as e:
-        signal.alarm(0)
         if debug:
             print(f"compilation error = {e}")
         return False
-    signal.alarm(0)
     
     if which_type == CODE_TYPE.call_based:
         assert isinstance(method_name, str)
@@ -152,8 +133,6 @@ def compile_and_get_func(program, which_type, method_name, timeout, debug):
     try:
         method = getattr(tmp, method_name)  # get_attr second arg must be str
     except:
-        signal.alarm(0)
-        signal.alarm(0)
         e = sys.exc_info()
         if debug:
             print(f"unable to get function error = {e}")
@@ -227,18 +206,19 @@ def execute_cb_code(method, inputs_list, outputs_list, timeout, early_stop=False
     for index, inputs in enumerate(inputs_list):
         if debug:
             debug_infos[index] = {}
-        signal.alarm(timeout) 
         faulthandler.enable()
         outputs = outputs_list[index]
         try:
             exec_outputs = method(*inputs)
         except Exception as e:
-            signal.alarm(0)
             faulthandler.disable()
             if debug:
                 print(f"Standard input runtime error = {e}")
             results.append((False, EXECUTION_RESULTS[-2]))
-            continue
+            if early_stop:
+                break
+            else:
+                continue
         try:
             # ground truth sequences are not tuples
             if isinstance(exec_outputs, tuple):
@@ -259,18 +239,25 @@ def execute_cb_code(method, inputs_list, outputs_list, timeout, early_stop=False
                 results.append((True, EXECUTION_RESULTS[1]))
             else:
                 results.append((False, EXECUTION_RESULTS[0]))
+                if early_stop:
+                    break
+                else:
+                    continue
             
-            # reset the alarm
-            signal.alarm(0)
         except Exception as e:
-            signal.alarm(0)
             faulthandler.disable()
             if debug:
                 print(f"Standard input time limit exceeded error = {e}")
             results.append((False, EXECUTION_RESULTS[-1]))
-            continue
+            if early_stop:
+                break
+            else:
+                continue
+
+        if early_stop and not results[-1][0]:
+            break
+            
         faulthandler.disable()
-        signal.alarm(0)
         if debug:
             print(f"outputs = {exec_outputs}, test outputs = {outputs}, inputs = {inputs}, {type(inputs)}, {exec_outputs == [outputs]}")
             debug_infos[index] = {

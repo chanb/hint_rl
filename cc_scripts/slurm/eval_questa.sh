@@ -48,7 +48,7 @@ echo "Task index: $i"
 echo "Running on hostname \$(hostname)"
 
 python /home/chanb/research/hint_rl/hint_rl/cc_scripts/olympiad_bench_eval.py \
-  --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-questa_50.yaml \
+  --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-questa.yaml \
   trial_name=\${trial_name} \
   actor.path=\${actor_path} \
   valid_dataset.path=\${dataset_path}
