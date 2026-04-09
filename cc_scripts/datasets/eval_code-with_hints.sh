@@ -12,7 +12,7 @@ module load cuda/12.9
 source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
 
 python /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval_code-with_hints.py \
-    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval_code.yaml \
+    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/eval/eval_code.yaml \
     trial_name=local_eval-evaluate_code-50_hints-openreasoning-nemotron \
     actor.path=nvidia/OpenReasoning-Nemotron-1.5B \
     valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep
