@@ -110,8 +110,12 @@ dat_file=<PATH_TO>/eval_configs-per_model.dat <PATH_TO>/hint_rl/cc_scripts/slurm
 Plot with `cc_scripts/plots/check_hint_usefulness-per_model.ipynb`
 
 ## Hint RL code changes
+To account for the new datasets, the changes are done in `areal.dataset`.
+
 We implement dynamic hints by adding `areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow` and `areal.trainer.rl_trainer.CurriculumPPOTrainer`.
 The former adds partial hints based on `hint_percentage` of the question, and the latter keeps track of the `hint_percentage`.
+
+To include code domains, we added `CodeVerifyWorker` under `areal.reward`, as well as `areal.utils.pyext2` and `areal.utils.pytest_util` which we imported from the [TACO repository](https://github.com/FlagOpen/TACO).
 
 ## TODO
 - Test code eval command: `python /home/chanb/research/hint_rl/hint_rl/cc_scripts/code_eval-with_hints.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval-code.yaml trial_name=local_eval-test_code actor.path=nvidia/OpenReasoning-Nemotron-1.5B valid_dataset.path=/home/chanb/scratch/datasets/opencode/data/opencode_hint_sep`
