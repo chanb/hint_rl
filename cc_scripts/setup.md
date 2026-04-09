@@ -95,8 +95,29 @@ python <PATH_TO>/hint_rl/cc_scripts/eval_math.py --config <PATH_TO>/hint_rl/cc_s
 dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.sh
 ```
 
+## Experiments
+### Math domain
+```
+cd <PATH_TO>/hint_rl/cc_scripts
 
-## Ablation experiments
+# Ours
+sbatch slurm/train_hint_rl.sh
+
+# Baseline 1: QuestA, 50% hint for 100 steps -> 25% hint for remaining steps
+sbatch slurm/train_questa.sh
+
+# Baseline 2: DAPO, 0% hint
+sbatch slurm/train_dapo.sh
+
+# Baseline 3: On-policy self-distillation, distilling from X% hint
+sbatch slurm/train_opsd.sh
+```
+
+### Code domain
+TBD
+
+
+## Ablation experiments in math domain
 ### Hint percentage
 ```
 dat_file=<PATH_TO>/eval_configs-per_hint_percentage.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_math.sh
