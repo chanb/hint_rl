@@ -53,7 +53,7 @@ python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --o
 # Code: Open code
 export dataset_path=<PATH_TO>/datasets/opencode
 mkdir -p <PATH_TO>/datasets/opencode/data
-python create_hint_dataset_opencode.py --data_path=${dataset_path}/train.jsonl --out_path=${dataset_path}/data/opencode-hint_sep.jsonl
+python create_hint_dataset_opencode.py --out_path=${dataset_path}/data/opencode-hint_sep.jsonl
 python process.py --input=${dataset_path}/data/opencode-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
 python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/opencode_hint_sep
 ```

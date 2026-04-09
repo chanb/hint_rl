@@ -11,7 +11,10 @@ from typing import Dict
 from tqdm import tqdm
 
 
-def check_correctness(sample, generation, timeout, debug=True):
+MAX_TOKENS = 24000
+
+
+def check_correctness(sample, generation, debug=True):
     """Check correctness of code generation with a global timeout.
     The global timeout is to catch some extreme/rare cases not handled by the timeouts
     inside `run_test`"""
@@ -45,7 +48,6 @@ def split_prefix(text, scale):
 def main():
     # conver to dict_keys(['query_id', 'verify', 'prompt', 'final_answer', 'answer'])
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, default='~/scratch/datasets/opencode/train.jsonl')
     parser.add_argument("--out_path", type=str, default='~/scratch/datasets/opencode/train-prefix.jsonl')
     args = parser.parse_args()
 
@@ -57,23 +59,31 @@ def main():
         if not sample["test_cases"]:
             continue
 
-        if sample["num_tokens"] > 24000:
+        if sample["num_tokens"] > MAX_TOKENS:
             continue
 
         deepseek_solution = sample["deepseek_solution"]
-        hint_solution_split = deepseek_solution.split("### Solution Code")
-        hint = hint_solution_split[0]
-        accepted_solution = (
-            hint_solution_split[1]
-            .split("### Explanation")[0]
-            .split("```python")[1]
-            .split("```")[0]
-        )
+        if "```python" not in deepseek_solution:
+            continue
+
+        try:
+            hint_solution_split = deepseek_solution.split("### Solution Code")
+            hint = hint_solution_split[0]
+            accepted_solution = (
+                hint_solution_split[1]
+                .split("### Explanation")[0]
+                .split("```python")[1]
+                .split("```")[0]
+            )
+        except:
+            hint_solution_split = deepseek_solution.split("```python")
+            hint = hint_solution_split[0]
+            accepted_solution = hint_solution_split[1].split("```")[0]
 
         test_cases = sample["test_cases"]
         sample["test_cases"] = json.loads(sample["test_cases"])
 
-        if not all(check_correctness(sample, accepted_solution, TIMEOUT, debug=False)):
+        if not all(check_correctness(sample, accepted_solution, debug=False)):
             continue
 
         if hint[0] == "\"":
@@ -83,7 +93,6 @@ def main():
         if len(prefix) < 10:
             prefix = ""
 
-        count += 1
         new_d = {}
         new_d['query_id'] = sample_i
         new_d['verify'] = True

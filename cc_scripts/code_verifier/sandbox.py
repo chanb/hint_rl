@@ -46,6 +46,9 @@ dict_keys(['id', 'aliases', 'contest_id', 'contest_name', 'contest_type', 'conte
 count = 0
 corrects = dict()
 for sample_i, sample in tqdm(enumerate(ds)):
+    if sample_i < 6989:
+        continue
+
     if not sample["source"] not in ["codeforces", "code_contests"]:
         continue
 
@@ -53,7 +56,10 @@ for sample_i, sample in tqdm(enumerate(ds)):
         continue
 
     accepted_solution = sample["deepseek_solution"]
-    accepted_solution = accepted_solution.split("### Solution Code")[1].split("### Explanation")[0].split("```python")[1].split("```")[0]
+    try:
+        accepted_solution = accepted_solution.split("### Solution Code")[1].split("### Explanation")[0].split("```python")[1].split("```")[0]
+    except:
+        accepted_solution = accepted_solution.split("```python")[1].split("```")[0]
 
     # if "class Solution:" not in accepted_solution:
     #     continue

@@ -12,6 +12,7 @@ import faulthandler
 
 import subprocess
 import tempfile
+import uuid
 
 from enum import Enum
 class CODE_TYPE(Enum):
@@ -279,9 +280,11 @@ def execute_cb_code(method, inputs_list, outputs_list, timeout, early_stop=False
                 }
     return results, debug_infos
 
-def remove_tmp_files():
-    tmp_files = ['input.txt', 'output.txt']
+def remove_tmp_files(tmp_files):
     for tmp_file in tmp_files:
+        if tmp_file is None:
+            continue
+
         if tmp_file in os.listdir('.'):
             os.remove(tmp_file)
 
@@ -295,7 +298,6 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
     if debug:
         exec_results['debug'] = {}
     for i, inputs in enumerate(inputs_list):
-        remove_tmp_files()
         outputs = outputs_list[i]
         if isinstance(inputs, list):
             inputs = "\n".join(inputs)
@@ -322,19 +324,21 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
                     else:
                         exec_code = 0
                 except:
+                    inputs_tmp_file = "input-{}.txt".format(str(uuid.uuid4()))
+                    outputs_tmp_file = "output-{}.txt".format(str(uuid.uuid4()))
                     try:
-                        inputs_tmp_file = 'input.txt'
                         with open(inputs_tmp_file, 'w') as ftemp:
                             ftemp.write(inputs)
                         result = subprocess.run(['python', temp_program_path], text=True, timeout=timeout)
                         assert result.returncode == 0
-                        if compare_std_results(open('output.txt').read(), outputs, debug):
+                        if compare_std_results(open(outputs_tmp_file).read(), outputs, debug):
                             exec_code = 1
                         else:
                             exec_code = 0
                     except:
                         # print('!!!!!!!!!!!!!')
                         exec_code = -3
+                    remove_tmp_files([inputs_tmp_file, outputs_tmp_file])
             elif compare_std_results(result.stdout, outputs, debug):
                 exec_code = 1
             else:
