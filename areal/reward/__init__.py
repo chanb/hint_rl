@@ -136,7 +136,7 @@ __all__ = [
     "gsm8k_reward_fn",
     "geometry3k_reward_fn",
     "clevr_count_70k_reward_fn",
-    "codeforce_reward_fn",
+    "opencode_reward_fn",
 ]
 
 
@@ -144,7 +144,7 @@ _LAZY_IMPORTS = {
     "gsm8k_reward_fn": "areal.reward.gsm8k",
     "geometry3k_reward_fn": "areal.reward.geometry3k",
     "clevr_count_70k_reward_fn": "areal.reward.clevr_count_70k",
-    "codeforce_reward_fn": "areal.reward.codeforce",
+    "opencode_reward_fn": "areal.reward.opencode",
 }
 
 

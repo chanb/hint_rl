@@ -50,19 +50,12 @@ python create_hint_dataset_openmath.py --data_path=${dataset_path}/OpenR1-50-0-4
 python process.py --input=${dataset_path}/data/OpenR1-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
 python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/openr1_hint_sep
 
-# Code: APPS
-export dataset_path=<PATH_TO>/datasets/apps
-mkdir -p <PATH_TO>/datasets/apps/data
-python create_hint_dataset_apps.py --data_path=${dataset_path}/train.jsonl --out_path=${dataset_path}/data/apps-hint_sep.jsonl
-python process.py --input=${dataset_path}/data/apps-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
-python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/apps_hint_sep
-
-# Code: TACO
-export dataset_path=<PATH_TO>/datasets/taco
-mkdir -p <PATH_TO>/datasets/taco/data
-python create_hint_dataset_taco.py --data_path=${dataset_path}/TACO/train --out_path=${dataset_path}/data/taco-hint_sep.jsonl
-python process.py --input=${dataset_path}/data/taco-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
-python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/taco_hint_sep
+# Code: Open code
+export dataset_path=<PATH_TO>/datasets/opencode
+mkdir -p <PATH_TO>/datasets/opencode/data
+python create_hint_dataset_opencode.py --data_path=${dataset_path}/train.jsonl --out_path=${dataset_path}/data/opencode-hint_sep.jsonl
+python process.py --input=${dataset_path}/data/opencode-hint_sep.jsonl --output=${dataset_path}/data/train-hint_sep.jsonl
+python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep.jsonl --output=${dataset_path}/data/opencode_hint_sep
 ```
 
 ### Run training

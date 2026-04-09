@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 VALID_DATASETS = [
-    "apps",
+    "codeforce",
     "gsm8k",
     "clevr_count_70k",
     "geometry3k",
@@ -64,10 +64,10 @@ def _get_custom_dataset(
             max_length=max_length,
             **kwargs,
         )
-    elif "apps" in path and type == "rl":
-        from .apps import get_apps_rl_dataset
+    elif "opencode" in path and type == "rl":
+        from .opencode import get_opencode_rl_dataset
 
-        return get_apps_rl_dataset(
+        return get_opencode_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,

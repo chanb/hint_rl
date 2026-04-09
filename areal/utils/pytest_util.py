@@ -42,7 +42,7 @@ def run_test(sample, test=None, debug=False):
         print(f"start = {datetime.now().time()}")
 
     try:
-        in_outs = sample["public_tests"]
+        in_outs = sample["test_cases"]
     except ValueError:
         in_outs = None
     
@@ -55,8 +55,8 @@ def run_test(sample, test=None, debug=False):
             method_name = in_outs["fn_name"]
     inputs_list = []
     outputs_list = []
-    for index, inputs in enumerate(in_outs["input"]):
-        outputs = in_outs["output"][index]
+    for index, inputs in enumerate(in_outs["inputs"]):
+        outputs = in_outs["outputs"][index]
         inputs, outputs = process_input_output(inputs, outputs)
         inputs_list.append(inputs)
         outputs_list.append(outputs)
@@ -337,7 +337,6 @@ def execute_std_code(synthesized_code, inputs_list, outputs_list, timeout, early
                         exec_code = -3
             elif compare_std_results(result.stdout, outputs, debug):
                 exec_code = 1
-                print("DIRECT COMPARE", exec_code)
             else:
                 exec_code = 0
         exec_results[i] = (exec_code==1, EXECUTION_RESULTS[exec_code] if exec_code>-3 else EXECUTION_RESULTS[exec_code].format(code=result.returncode))

@@ -5,6 +5,7 @@ import json, os
 import multiprocessing
 import numpy as np
 from typing import Dict
+from tqdm import tqdm
 
 TIMEOUT = 10
 
@@ -24,16 +25,17 @@ def check_correctness(sample, generation, timeout, debug=True):
     if p.is_alive():
         p.kill()
     if not result:
-        in_outs = sample["public_tests"]
+        in_outs = sample["test_cases"]
         # consider that all tests failed
-        result = [[-1 for i in range(len(in_outs["input"]))]]
+        result = [[-1 for i in range(len(in_outs["inputs"]))]]
         if debug:
             print(f"global timeout")
     return result[0]
 
 # ── Load dataset ──────────────────────────────────────────────────────────────
 # ds = load_from_disk("/home/chanb/scratch/datasets/taco/data/taco_hint_sep/train")
-ds = load_dataset("open-r1/codeforces-cots", "solutions_py_decontaminated", split="train")
+# ds = load_dataset("open-r1/codeforces-cots", "solutions_py_decontaminated", split="train")
+ds = load_dataset("open-r1/OpenThoughts-114k-Code_decontaminated", split="train")
 
 """
 dict_keys(['id', 'aliases', 'contest_id', 'contest_name', 'contest_type', 'contest_start', 'contest_start_year', 'index', 'time_limit', 'memory_limit', 'title', 'description', 'input_format', 'output_format', 'interaction_format', 'note', 'examples', 'editorial', 'prompt', 'generation', 'finish_reason', 'api_metadata', 'messages', 'accepted_solutions', 'failed_solutions', 'generated_tests', 'private_tests', 'problem_type', 'public_tests', 'public_tests_ms'])
@@ -42,17 +44,30 @@ dict_keys(['id', 'aliases', 'contest_id', 'contest_name', 'contest_type', 'conte
 """
 
 count = 0
-for sample_i, sample in enumerate(ds):
-    if not sample["accepted_solutions"]:
+corrects = dict()
+for sample_i, sample in tqdm(enumerate(ds)):
+    if not sample["source"] not in ["codeforces", "code_contests"]:
         continue
 
-    print(sample_i)
-    print(sample.keys())
+    if not sample["test_cases"]:
+        continue
 
-    print(sample["accepted_solutions"])
+    accepted_solution = sample["deepseek_solution"]
+    accepted_solution = accepted_solution.split("### Solution Code")[1].split("### Explanation")[0].split("```python")[1].split("```")[0]
 
-    print(check_correctness(sample, sample["accepted_solutions"][0]["code"], TIMEOUT, debug=False))
+    # if "class Solution:" not in accepted_solution:
+    #     continue
+
+    # print(accepted_solution)
+    sample["test_cases"] = json.loads(sample["test_cases"])
 
     count += 1
-    if count > 10:
-        break
+    if all(check_correctness(sample, accepted_solution, TIMEOUT, debug=False)):
+        # print("CORRECT")
+        # print("---")
+        corrects[sample_i] = 1
+    else:
+        corrects[sample_i] = 0
+
+print(corrects)
+print("{}/{}".format(sum(corrects.values()), count))
