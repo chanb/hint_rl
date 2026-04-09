@@ -1,5 +1,6 @@
 import json
 import multiprocessing
+import re
 
 from math_verify.metric import math_metric
 from math_verify.parser import ExprExtractionConfig, LatexExtractionConfig
@@ -81,6 +82,15 @@ class CodeVerifyWorker:
             inside `run_test`"""
             def _temp_run(test_cases, generation, debug, result):
                 result.append(run_test(test_cases, test=generation, debug=debug))
+
+            pattern = r"```python\s*\r?\n(.*?)\r?\n```"
+            codes = [block.strip() for block in re.findall(pattern, generation, re.DOTALL)]
+
+            if len(codes) == 0:
+                logger.info("no code found")
+                return [False]
+
+            generation = codes[0]
 
             manager = multiprocessing.Manager()
             result = manager.list()
