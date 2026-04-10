@@ -1411,29 +1411,29 @@ class OPSDTrainer(PPOTrainer):
                     rollout_batch["prox_logp"] = self.actor.compute_logp(rollout_batch)
                     self.actor.get_device_stats().log("recompute logp")
 
-            if self.ref is not None:
-                with (
-                    stats_tracker.record_timing("ref_logp"),
-                    perf_tracer.trace_scope(
-                        "train.ref_logp",
-                        category=Category.COMPUTE,
-                        args={"global_step": global_step},
-                    ),
-                ):
-                    # TODO: Change this
-                    rollout_batch["ref_logp"] = self.ref.compute_logp(rollout_batch)
-                    self.ref.get_device_stats().log("ref logp")
-
             with (
-                stats_tracker.record_timing("compute_advantage"),
+                stats_tracker.record_timing("compute_hint_logp"),
                 perf_tracer.trace_scope(
-                    "train.compute_advantage",
+                    "train.compute_hint_logp",
                     category=Category.COMPUTE,
                     args={"global_step": global_step},
                 ),
             ):
-                adv_batch = self.actor.compute_advantages(rollout_batch)
-                self.actor.get_device_stats().log("compute advantages")
+                rollout_batch["prox_hint_logp"] = self.actor.compute_logp({
+                    "input_ids": rollout_batch["hint_input_ids"],
+                    "attention_mask": rollout_batch["hint_attention_mask"],
+                })
+
+            with (
+                stats_tracker.record_timing("compute_opsd_advantage"),
+                perf_tracer.trace_scope(
+                    "train.compute_opsd_advantage",
+                    category=Category.COMPUTE,
+                    args={"global_step": global_step},
+                ),
+            ):
+                adv_batch = self.actor.compute_opsd_advantages(rollout_batch)
+                self.actor.get_device_stats().log("compute opsd advantages")
 
             # Wait for async checkpoint staging to complete before modifying parameters
             self.saver.maybe_wait_for_staging()

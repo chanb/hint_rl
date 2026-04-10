@@ -2,6 +2,7 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
+import copy
 import torch
 from transformers import PreTrainedTokenizerFast
 
@@ -53,7 +54,7 @@ def split_prefix(text, scale):
 
 def make_data_extract_prompt_fn(hint_percentage: dict[str, Any]) -> Callable[[dict[str, Any]], Any]:
     def data_extract_prompt_fn(data: dict[str, Any]) -> Any:
-        messages = data["messages"]
+        messages = copy.deepcopy(data["messages"])
         if (
             "## Hint." not in messages[0]["content"]
             and "hint" in data
@@ -175,6 +176,7 @@ class OPSDWorkflow(RolloutWorkflow):
             "logprobs": torch.tensor(logprobs, dtype=torch.float32),
             "versions": torch.tensor(versions, dtype=torch.int32),
             "attention_mask": torch.ones(len(seq), dtype=torch.bool),
+            "hint_attention_mask": torch.ones(len(hint_seq), dtype=torch.bool),
             "id": torch.tensor(int(data["id"]), dtype=torch.int32) if "id" in data else torch.tensor(-1, dtype=torch.int32),
         }
         return {k: v.unsqueeze(0) for k, v in res.items()}

@@ -1646,6 +1646,10 @@ class FSDPPPOActor(FSDPEngine):
     def compute_advantages(self, *args, **kwargs) -> dict[str, Any]:
         return self.actor.compute_advantages(*args, **kwargs)
 
+    @torch.no_grad()
+    def compute_opsd_advantages(self, *args, **kwargs) -> dict[str, Any]:
+        return self.actor.compute_opsd_advantages(*args, **kwargs)
+
     def ppo_update(self, *args, **kwargs) -> None:
         self.actor.ppo_update(*args, **kwargs)
 

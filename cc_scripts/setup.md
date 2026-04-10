@@ -153,3 +153,18 @@ We implement dynamic hints by adding `areal.workflow.dynamic_hint_rlvr.DynamicHi
 The former adds partial hints based on `hint_percentage` of the question, and the latter keeps track of the `hint_percentage`.
 
 To include code domains, we added `CodeVerifyWorker` under `areal.reward`, as well as `areal.utils.pyext2` and `areal.utils.pytest_util` which we imported from the [TACO repository](https://github.com/FlagOpen/TACO).
+
+## Salient commands
+```
+python /home/bryanpu1/projects/neurips_2026/hint_rl/cc_scripts/train_openmath_opsd.py \
+    --config /home/bryanpu1/projects/neurips_2026/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
+    cluster.fileroot=/home/bryanpu1/projects/neurips_2026/scratch \
+    cluster.name_resolve.nfs_record_root=/home/bryanpu1/projects/neurips_2026/scratch/name_resolve \
+    stats_logger.tensorboard.path=/home/bryanpu1/projects/neurips_2026/scratch/tensorboard \
+    allocation_mode=sglang:d2p1t1+fsdp:d2 \
+    train_dataset.path=/home/bryanpu1/projects/neurips_2026/datasets/questa/data/openr1_hint_sep \
+    train_dataset.batch_size=4 \
+    rollout.max_concurrent_rollouts=24 \
+    rollout.queue_size=4 \
+    gconfig.n_samples=2
+```
