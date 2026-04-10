@@ -1252,6 +1252,18 @@ class CurriculumPPOTrainer(PPOTrainer):
                     self.eval_rollout.set_version(new_version)
 
             with (
+                stats_tracker.record_timing("clear_batches"),
+                perf_tracer.trace_scope(
+                    "train.clear_batches",
+                    category=Category.INSTR,
+                    args={"global_step": global_step},
+                ),
+            ):
+                # Since all RTensor objects are affiliated IPs,
+                # calling `clear_batches` once should be sufficient.
+                self.actor.clear_batches(rollout_batch, adv_batch)
+
+            with (
                 stats_tracker.record_timing("save"),
                 perf_tracer.trace_scope(
                     "train.save",
@@ -1304,18 +1316,6 @@ class CurriculumPPOTrainer(PPOTrainer):
                     epoch_step=step,
                     global_step=global_step,
                 )
-
-            with (
-                stats_tracker.record_timing("clear_batches"),
-                perf_tracer.trace_scope(
-                    "train.clear_batches",
-                    category=Category.INSTR,
-                    args={"global_step": global_step},
-                ),
-            ):
-                # Since all RTensor objects are affiliated IPs,
-                # calling `clear_batches` once should be sufficient.
-                self.actor.clear_batches(rollout_batch, adv_batch)
 
             with perf_tracer.trace_scope(
                 "train.log_stats",
@@ -1476,6 +1476,27 @@ class OPSDTrainer(PPOTrainer):
                     self.eval_rollout.set_version(new_version)
 
             with (
+                stats_tracker.record_timing("clear_batches"),
+                perf_tracer.trace_scope(
+                    "train.clear_batches",
+                    category=Category.INSTR,
+                    args={"global_step": global_step},
+                ),
+            ):
+                # Since all RTensor objects are affiliated IPs,
+                # calling `clear_batches` once should be sufficient.
+                self.actor.clear_batches(rollout_batch, adv_batch)
+
+            with perf_tracer.trace_scope(
+                "train.log_stats",
+                category=Category.INSTR,
+                args={"global_step": global_step},
+            ):
+                self._export_and_commit_stats(
+                    epoch=epoch, epoch_step=step, global_step=global_step
+                )
+
+            with (
                 stats_tracker.record_timing("save"),
                 perf_tracer.trace_scope(
                     "train.save",
@@ -1527,27 +1548,6 @@ class OPSDTrainer(PPOTrainer):
                     epoch=epoch,
                     epoch_step=step,
                     global_step=global_step,
-                )
-
-            with (
-                stats_tracker.record_timing("clear_batches"),
-                perf_tracer.trace_scope(
-                    "train.clear_batches",
-                    category=Category.INSTR,
-                    args={"global_step": global_step},
-                ),
-            ):
-                # Since all RTensor objects are affiliated IPs,
-                # calling `clear_batches` once should be sufficient.
-                self.actor.clear_batches(rollout_batch, adv_batch)
-
-            with perf_tracer.trace_scope(
-                "train.log_stats",
-                category=Category.INSTR,
-                args={"global_step": global_step},
-            ):
-                self._export_and_commit_stats(
-                    epoch=epoch, epoch_step=step, global_step=global_step
                 )
 
             # Resume rollout
