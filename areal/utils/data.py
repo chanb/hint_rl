@@ -173,6 +173,10 @@ def concat_padded_tensors(
     # Find max sequence length across all dictionaries
     assert all("attention_mask" in td for td in tensor_dicts)
     max_length = max([x["attention_mask"].shape[1] for x in tensor_dicts])
+
+    if any("hint_attention_mask" in td for td in tensor_dicts):
+        hint_max_length = max([x["hint_attention_mask"].shape[1] for x in tensor_dicts if "hint_attention_mask"])
+        max_length = max(max_length, hint_max_length)
     result = {}
 
     multimodal_keys = {

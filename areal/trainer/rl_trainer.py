@@ -1330,3 +1330,227 @@ class CurriculumPPOTrainer(PPOTrainer):
             self.rollout.resume()
 
             self._save_perf_tracer(step=global_step)
+
+
+class OPSDTrainer(PPOTrainer):
+    def train(
+        self,
+        workflow: WorkflowLike | None = None,
+        eval_workflow: WorkflowLike | None = None,
+        workflow_kwargs: dict[str, Any] | None = None,
+        eval_workflow_kwargs: dict[str, Any] | None = None,
+        dynamic_filter_fn: Callable[[dict[str, Any]], bool] | str | None = None,
+        total_epochs: int | None = None,
+    ):
+        config = self.config
+        start_step = (
+            self.recover_info.last_step_info.next().global_step
+            if self.recover_info is not None
+            else 0
+        )
+
+        if total_epochs is None:
+            total_epochs = config.total_train_epochs
+        if total_epochs <= 0:
+            raise ValueError(f"Total epochs must be positive: {total_epochs}")
+        steps_per_epoch = len(self.train_dataloader)
+        max_steps = total_epochs * steps_per_epoch
+
+        # Initialize proxy workers if not using RolloutWorkflow
+        if workflow is None:
+            openai_cfg = self.config.rollout.openai
+            if openai_cfg is not None and openai_cfg.mode == "online":
+                self._ensure_proxy_started()
+            else:
+                raise ValueError(
+                    "workflow must be specified for train() unless "
+                    "openai.mode='online' is configured. "
+                    "Pass a RolloutWorkflow, AgentWorkflow, or callable."
+                )
+        elif self._requires_proxy_workflow(workflow):
+            self._ensure_proxy_started()
+
+        for global_step in range(start_step, max_steps):
+            if (
+                config.total_train_steps is not None
+                and global_step >= config.total_train_steps
+            ):
+                break
+            epoch = global_step // steps_per_epoch
+            step = global_step % steps_per_epoch
+
+            with (
+                stats_tracker.record_timing("rollout"),
+                perf_tracer.trace_scope(
+                    "train.rollout",
+                    category=Category.COMPUTE,
+                    args={
+                        "global_step": global_step,
+                        "epoch_step": step,
+                    },
+                ),
+            ):
+                rollout_batch = self.actor.prepare_batch(
+                    self.train_dataloader,
+                    workflow=workflow,
+                    workflow_kwargs=workflow_kwargs,
+                    should_accept_fn=dynamic_filter_fn,
+                    group_size=config.gconfig.n_samples,
+                    dynamic_bs=self.config.dynamic_bs,
+                )
+
+            if config.actor.should_compute_prox_logp():
+                with (
+                    stats_tracker.record_timing("recompute_logp"),
+                    perf_tracer.trace_scope(
+                        "train.recompute_logp",
+                        category=Category.COMPUTE,
+                        args={"global_step": global_step},
+                    ),
+                ):
+                    rollout_batch["prox_logp"] = self.actor.compute_logp(rollout_batch)
+                    self.actor.get_device_stats().log("recompute logp")
+
+            with (
+                stats_tracker.record_timing("compute_hint_logp"),
+                perf_tracer.trace_scope(
+                    "train.compute_hint_logp",
+                    category=Category.COMPUTE,
+                    args={"global_step": global_step},
+                ),
+            ):
+                # XXX: The OPSD paper uses a pretrained model rather than the currently updated model,
+                #      the claim is that it's more stable.
+                rollout_batch["prox_hint_logp"] = self.actor.compute_logp({
+                    "input_ids": rollout_batch["hint_input_ids"],
+                    "attention_mask": rollout_batch["hint_attention_mask"],
+                })
+
+            with (
+                stats_tracker.record_timing("compute_opsd_advantage"),
+                perf_tracer.trace_scope(
+                    "train.compute_opsd_advantage",
+                    category=Category.COMPUTE,
+                    args={"global_step": global_step},
+                ),
+            ):
+                adv_batch = self.actor.compute_opsd_advantages(rollout_batch)
+                self.actor.get_device_stats().log("compute opsd advantages")
+
+            # Wait for async checkpoint staging to complete before modifying parameters
+            self.saver.maybe_wait_for_staging()
+
+            with (
+                stats_tracker.record_timing("train_step"),
+                perf_tracer.trace_scope(
+                    "train.ppo_update",
+                    category=Category.COMPUTE,
+                    args={"global_step": global_step},
+                ),
+            ):
+                self.actor.ppo_update(adv_batch)
+                self.actor.step_lr_scheduler()
+                self.actor.get_device_stats().log("ppo update")
+
+            # pause inference for updating weights, save, and evaluation
+            self.rollout.pause()
+
+            with (
+                stats_tracker.record_timing("update_weights"),
+                perf_tracer.trace_scope(
+                    "train.update_weights",
+                    category=Category.COMM,
+                    args={"global_step": global_step},
+                ),
+            ):
+                # Use versioned path for weight updates
+                new_version = global_step + 1
+                versioned_meta = self.weight_update_meta.with_version(new_version)
+                self.actor.update_weights(versioned_meta)
+
+                self.actor.set_version(new_version)
+                if self.critic is not None:
+                    self.critic.set_version(new_version)
+                self.rollout.set_version(new_version)
+                if self.eval_rollout is not None:
+                    self.eval_rollout.set_version(new_version)
+
+            with (
+                stats_tracker.record_timing("save"),
+                perf_tracer.trace_scope(
+                    "train.save",
+                    category=Category.IO,
+                    args={"global_step": global_step},
+                ),
+            ):
+                self._save_hf(epoch=epoch, epoch_step=step, global_step=global_step)
+                if self.saver.freq_ctl.check(
+                    epochs=int(step == self.saver.ft_spec.steps_per_epoch - 1), steps=1
+                ):
+                    save_path = Saver.get_model_save_path(
+                        self.config.experiment_name,
+                        self.config.trial_name,
+                        self.config.cluster.fileroot,
+                        epoch,
+                        step,
+                        global_step,
+                    )
+
+                    pickle.dump(
+                        workflow_kwargs['hint_percentage'],
+                        open(os.path.join(save_path, "hint_percentage.pkl"), "wb"),
+                    )
+
+            with (
+                stats_tracker.record_timing("checkpoint_for_recover"),
+                perf_tracer.trace_scope(
+                    "train.checkpoint",
+                    category=Category.IO,
+                    args={"global_step": global_step},
+                ),
+            ):
+                self._save_recover_checkpoint(
+                    epoch=epoch, epoch_step=step, global_step=global_step
+                )
+
+            with (
+                stats_tracker.record_timing("eval"),
+                perf_tracer.trace_scope(
+                    "train.eval",
+                    category=Category.COMPUTE,
+                    args={"global_step": global_step},
+                ),
+            ):
+                self._evaluate(
+                    eval_workflow=eval_workflow,
+                    eval_workflow_kwargs=eval_workflow_kwargs,
+                    epoch=epoch,
+                    epoch_step=step,
+                    global_step=global_step,
+                )
+
+            with (
+                stats_tracker.record_timing("clear_batches"),
+                perf_tracer.trace_scope(
+                    "train.clear_batches",
+                    category=Category.INSTR,
+                    args={"global_step": global_step},
+                ),
+            ):
+                # Since all RTensor objects are affiliated IPs,
+                # calling `clear_batches` once should be sufficient.
+                self.actor.clear_batches(rollout_batch, adv_batch)
+
+            with perf_tracer.trace_scope(
+                "train.log_stats",
+                category=Category.INSTR,
+                args={"global_step": global_step},
+            ):
+                self._export_and_commit_stats(
+                    epoch=epoch, epoch_step=step, global_step=global_step
+                )
+
+            # Resume rollout
+            self.rollout.resume()
+
+            self._save_perf_tracer(step=global_step)

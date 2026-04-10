@@ -2,7 +2,7 @@ import _pickle as pickle
 import os
 import sys
 
-from areal import CurriculumPPOTrainer
+from areal import OPSDTrainer
 from areal.api.cli_args import GRPOConfig, load_expr_config
 from areal.dataset import get_custom_dataset
 from areal.utils.hf_utils import load_hf_tokenizer
@@ -18,33 +18,22 @@ def main(args):
         tokenizer=tokenizer,
     )
     workflow_kwargs = dict(
-        reward_fn="areal.reward.gsm8k.gsm8k_reward_fn",
         gconfig=config.gconfig,
         tokenizer=config.tokenizer_path,
         enable_thinking=False,
+        hint_percentage=dict(initial_hint=50)
     )
 
     valid_dataset = None
 
-    print("Using CurriculumPPOTrainer with dynamic hint generation.")
-    hint_percentage_path = os.path.join(config.actor.path, "hint_percentage.pkl")
-    if os.path.isfile(hint_percentage_path):
-        with open(hint_percentage_path, "rb") as f:
-            hint_percentage = pickle.load(f)
-    else:
-        hint_percentage = dict(
-            initial_hint=config.dynamic_hint.initial_hint
-        )
-    workflow_kwargs["hint_percentage"] = hint_percentage
-    print(workflow_kwargs)
-
-    with CurriculumPPOTrainer(
+    print("Using OPSDTrainer.")
+    with OPSDTrainer(
         config,
         train_dataset=train_dataset,
         valid_dataset=valid_dataset,
     ) as trainer:
         trainer.train(
-            workflow="areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow",
+            workflow="areal.workflow.opsd.OPSDWorkflow",
             workflow_kwargs=workflow_kwargs,
         )
 

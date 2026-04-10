@@ -1,4 +1,4 @@
-experiment_name: openmath-questa
+experiment_name: openmath-opsd
 trial_name: local_train
 
 seed: 1
@@ -20,12 +20,10 @@ scheduler:
   type: local
 
 dynamic_hint:
-  initial_hint: 50
-  goldilock_zone: [0.0, 1.0]
-  hint_delta: 0
-  dynamic_hint_schedule:
-    hint_percentages: [25]
-    change_steps: [100]
+  initial_hint: 100
+  goldilock_zone: [0.5, 0.75]
+  hint_delta: 10
+  dynamic_hint_schedule: null
 
 rollout:
   experiment_name: ${experiment_name}

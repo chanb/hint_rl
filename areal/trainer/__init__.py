@@ -1,4 +1,4 @@
-from .rl_trainer import PPOTrainer, CurriculumPPOTrainer
+from .rl_trainer import PPOTrainer, CurriculumPPOTrainer, OPSDTrainer
 from .sft_trainer import SFTTrainer
 
-__all__ = ["PPOTrainer", "SFTTrainer", "CurriculumPPOTrainer"]
+__all__ = ["PPOTrainer", "SFTTrainer", "CurriculumPPOTrainer", "OPSDTrainer"]

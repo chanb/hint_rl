@@ -232,6 +232,36 @@ class PPOActor:
 
         return data
 
+    @trace_perf("ppo_actor.compute_opsd_advantages", category="compute")
+    def compute_opsd_advantages(self, data: dict[str, Any]) -> dict[str, Any]:
+        bs = data["input_ids"].shape[0]
+        max_seqlen = data["input_ids"].shape[1]
+
+        seq_indices = torch.arange(
+            max_seqlen, device=data["input_ids"].device, dtype=torch.long
+        ).expand(bs, max_seqlen)
+        shifted_seq_indices = (seq_indices - data["roll"].unsqueeze(1)) % max_seqlen
+
+        torch.gather(data["hint_loss_mask"], 1, shifted_seq_indices)
+        data["prox_hint_logp"] = torch.gather(data["prox_hint_logp"], 1, shifted_seq_indices)
+        advantages = data["prox_hint_logp"] - data["prox_logp"]
+        data["returns"] = advantages
+
+        loss_mask = data["loss_mask"].float()
+        loss_mask = torch.roll(loss_mask, shifts=-1, dims=-1)
+        old_logp = torch.roll(data["logprobs"], shifts=-1, dims=-1)
+        old_logp *= loss_mask
+
+        # Store data in the dict.
+        data["advantages"] = advantages
+        data["kl_rewards"] = torch.zeros_like(advantages)
+        data["tot_rewards"] = torch.zeros_like(advantages)
+        data["loss_mask"] = loss_mask
+        # because we have rolled old_logp by -1
+        data["logprobs"] = old_logp
+
+        return data
+
     @trace_perf("ppo_actor.ppo_update", category="compute")
     @stats_tracker.scope_func_wrapper("ppo_actor")
     def ppo_update(self, data: dict[str, Any]) -> None:
@@ -353,6 +383,9 @@ class PPOActorController(TrainController):
 
     def ppo_update(self, *args, **kwargs) -> None:
         self._custom_function_call("ppo_update", *args, **kwargs)
+
+    def compute_opsd_advantages(self, *args, **kwargs):
+        return self._custom_function_call("compute_opsd_advantages", *args, **kwargs)
 
 
 def grpo_loss_fn(
