@@ -107,6 +107,7 @@ dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.
 **Modify the paths before executing below!!!!**
 
 ### Math domain
+Expect both QuestA and DAPO to run a little bit slower because the success rate is worse than starting from 100% hint.
 ```
 cd <PATH_TO>/hint_rl/cc_scripts
 
@@ -153,3 +154,6 @@ We implement dynamic hints by adding `areal.workflow.dynamic_hint_rlvr.DynamicHi
 The former adds partial hints based on `hint_percentage` of the question, and the latter keeps track of the `hint_percentage`.
 
 To include code domains, we added `CodeVerifyWorker` under `areal.reward`, as well as `areal.utils.pyext2` and `areal.utils.pytest_util` which we imported from the [TACO repository](https://github.com/FlagOpen/TACO).
+
+## TODO
+- [ ] Run dynamic batch size rather than filtering.
