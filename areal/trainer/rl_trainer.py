@@ -1419,6 +1419,8 @@ class OPSDTrainer(PPOTrainer):
                     args={"global_step": global_step},
                 ),
             ):
+                # XXX: The OPSD paper uses a pretrained model rather than the currently updated model,
+                #      the claim is that it's more stable.
                 rollout_batch["prox_hint_logp"] = self.actor.compute_logp({
                     "input_ids": rollout_batch["hint_input_ids"],
                     "attention_mask": rollout_batch["hint_attention_mask"],
