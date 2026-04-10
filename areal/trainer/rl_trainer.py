@@ -1102,7 +1102,7 @@ class CurriculumPPOTrainer(PPOTrainer):
                 rollout_batch = self.actor.prepare_batch(
                     self.train_dataloader,
                     workflow=workflow,
-                    workflow_kwargs=workflow_kwargs,
+                    workflow_kwargs=deepcopy(workflow_kwargs),
                     should_accept_fn=dynamic_filter_fn,
                     group_size=config.gconfig.n_samples,
                     dynamic_bs=self.config.dynamic_bs,
