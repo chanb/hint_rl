@@ -29,10 +29,6 @@ mkdir -p <PATH_TO>/datasets/questa/data/
 cd <PATH_TO>/datasets/questa
 wget https://huggingface.co/datasets/foreverlasting1202/QuestA/resolve/main/OpenR1-50-0-4.jsonl
 
-mkdir -p <PATH_TO>/datasets/apps/data/
-cd <PATH_TO>/datasets/apps
-wget https://huggingface.co/datasets/codeparrot/apps/resolve/main/train.jsonl
-
 cd <PATH_TO>/hint_rl/cc_scripts/datasets
 code_path=<PATH_TO>/hint_rl dataset_path=<PATH_TO>/datasets/questa ./make_hint_sweep.sh
 ```
