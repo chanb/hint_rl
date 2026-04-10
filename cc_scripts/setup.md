@@ -98,9 +98,9 @@ python <PATH_TO>/hint_rl/cc_scripts/eval_math.py --config <PATH_TO>/hint_rl/cc_s
 # Slurm
 dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.sh
 
-# Eval heldout
+# Eval heldout math
 # NOTE: Modify actor_path to run your model
-<PATH_TO>/hint_rl/cc_scripts/slurm/eval_heldout.sh
+<PATH_TO>/hint_rl/cc_scripts/slurm/eval_heldout_math.sh
 ```
 
 ## Experiments
