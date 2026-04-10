@@ -177,6 +177,8 @@ class OPSDWorkflow(RolloutWorkflow):
             "versions": torch.tensor(versions, dtype=torch.int32),
             "attention_mask": torch.ones(len(seq), dtype=torch.bool),
             "hint_attention_mask": torch.ones(len(hint_seq), dtype=torch.bool),
+            "roll": torch.tensor(resp.input_len - len(hint_input_ids), dtype=torch.int32),
+            "rewards": torch.tensor(0.0),
             "id": torch.tensor(int(data["id"]), dtype=torch.int32) if "id" in data else torch.tensor(-1, dtype=torch.int32),
         }
         return {k: v.unsqueeze(0) for k, v in res.items()}
