@@ -1078,15 +1078,15 @@ class CurriculumPPOTrainer(PPOTrainer):
                         config.dynamic_hint.dynamic_hint_schedule.hint_percentages[curr_hint_schedule]
                     )
 
-                    curr_hint_schedule = max(
-                        curr_hint_schedule,
-                        len(config.dynamic_hint.dynamic_hint_schedule.hint_percentages) - 1
-                    )
-
                     logger.info("Hint schedule change {} at global step {}".format(
                         config.dynamic_hint.dynamic_hint_schedule.hint_percentages[curr_hint_schedule],
                         config.dynamic_hint.dynamic_hint_schedule.change_steps[curr_hint_schedule],
                     ))
+
+                    curr_hint_schedule = min(
+                        curr_hint_schedule + 1,
+                        len(config.dynamic_hint.dynamic_hint_schedule.hint_percentages) - 1
+                    )
 
             with (
                 stats_tracker.record_timing("rollout"),

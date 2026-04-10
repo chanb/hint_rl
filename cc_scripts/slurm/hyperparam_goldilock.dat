@@ -1,0 +1,4 @@
+export trial_name=initial_hint_100-hint_delta_10-goldilock_zone_0.0to0.1 initial_hint=100 hint_delta=10 goldilock_zone=[0.0,0.1]
+export trial_name=initial_hint_100-hint_delta_10-goldilock_zone_0.25to0.5 initial_hint=100 hint_delta=10 goldilock_zone=[0.25,0.5]
+export trial_name=initial_hint_100-hint_delta_10-goldilock_zone_0.25to0.75 initial_hint=100 hint_delta=10 goldilock_zone=[0.25,0.75]
+export trial_name=initial_hint_50-hint_delta_10-goldilock_zone_0.5to0.75 initial_hint=50 hint_delta=10 goldilock_zone=[0.5,0.75]

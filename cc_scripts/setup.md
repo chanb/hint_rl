@@ -79,6 +79,8 @@ Based on our tuning, `max_concurrent_rollouts` and `allocation_mode` are the mos
 On L40s nodes we can have approximately 28 `max_concurent_rollouts` per GPU.
 The sweet spot on Vulcan seems to be two nodes for rollout and two nodes for training, e.g., `sglang:d2p1t1+fsdp:d2p1t1`.
 
+To maximize your GPU utilization, only change `rollout.max_concurrent_rollouts`, `rollout.queue_size`, and `allocation_mode`.
+
 
 ### Hint RL visualization
 Run `cc_scripts/plots/check_hint_change.ipynb` to plot out how the hint % changes over time.
@@ -102,6 +104,8 @@ dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.
 ```
 
 ## Experiments
+**Modify the paths before executing below!!!!**
+
 ### Math domain
 ```
 cd <PATH_TO>/hint_rl/cc_scripts
@@ -121,6 +125,12 @@ sbatch slurm/train_opsd.sh
 
 ### Code domain
 TBD
+
+### Hyperparameter sweep on goldilock zones
+```
+cd <PATH_TO>/hint_rl/cc_scripts/slurm
+sbatch hyperparam_goldilock.sh
+```
 
 
 ## Ablation experiments in math domain
