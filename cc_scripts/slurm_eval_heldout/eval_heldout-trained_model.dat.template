@@ -1,0 +1,18 @@
+# Template for evaluating trained checkpoints on heldout datasets.
+# Replace <CHECKPOINT_PATH> with actual checkpoint path, e.g.:
+#   /home/fengdic/scratch/hint_rl_results/checkpoints/fengdic/openmath-hint_rl/local_train/default/epoch10epochstep13globalstep153
+# Replace <MODEL_TAG> with a short identifier, e.g.: hint_rl_step153
+#
+# To generate a .dat file for all checkpoints of a trained model:
+#   for ckpt in /path/to/checkpoints/*/; do
+#     tag=$(basename $ckpt)
+#     for ds in aime24 aime25 olympiad_bench hmmt_feb_2025 brumo_2025; do
+#       echo "export trial_name=eval_${ds}-${tag} actor_path=${ckpt} dataset_name=${ds}"
+#     done
+#   done > eval_heldout-my_model.dat
+
+export trial_name=eval_aime24-<MODEL_TAG> actor_path=<CHECKPOINT_PATH> dataset_name=aime24
+export trial_name=eval_aime25-<MODEL_TAG> actor_path=<CHECKPOINT_PATH> dataset_name=aime25
+export trial_name=eval_olympiad_bench-<MODEL_TAG> actor_path=<CHECKPOINT_PATH> dataset_name=olympiad_bench
+export trial_name=eval_hmmt_feb_2025-<MODEL_TAG> actor_path=<CHECKPOINT_PATH> dataset_name=hmmt_feb_2025
+export trial_name=eval_brumo_2025-<MODEL_TAG> actor_path=<CHECKPOINT_PATH> dataset_name=brumo_2025

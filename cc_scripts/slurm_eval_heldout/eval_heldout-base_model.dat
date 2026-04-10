@@ -1,0 +1,5 @@
+export trial_name=eval_aime24-nemotron_base actor_path=nvidia/OpenMath-Nemotron-1.5B dataset_name=aime24
+export trial_name=eval_aime25-nemotron_base actor_path=nvidia/OpenMath-Nemotron-1.5B dataset_name=aime25
+export trial_name=eval_olympiad_bench-nemotron_base actor_path=nvidia/OpenMath-Nemotron-1.5B dataset_name=olympiad_bench
+export trial_name=eval_hmmt_feb_2025-nemotron_base actor_path=nvidia/OpenMath-Nemotron-1.5B dataset_name=hmmt_feb_2025
+export trial_name=eval_brumo_2025-nemotron_base actor_path=nvidia/OpenMath-Nemotron-1.5B dataset_name=brumo_2025
