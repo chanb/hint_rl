@@ -97,6 +97,9 @@ python <PATH_TO>/hint_rl/cc_scripts/eval_math.py --config <PATH_TO>/hint_rl/cc_s
 
 # Slurm
 dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.sh
+
+# Eval heldout (on Salient)
+python /home/bryanpu1/projects/neurips_2026/hint_rl/cc_scripts/eval_math.py     --config /home/bryanpu1/projects/neurips_2026/hint_rl/cc_scripts/configs/eval/eval_math.yaml     cluster.fileroot=/home/bryanpu1/projects/neurips_2026/scratch     cluster.name_resolve.nfs_record_root=/home/bryanpu1/projects/neurips_2026/scratch/name_resolve     stats_logger.tensorboard.path=/home/bryanpu1/projects/neurips_2026/scratch/tensorboard     allocation_mode=sglang:d8p1t1     valid_dataset.path=aime24 experiment_name=eval_aime24 gconfig.top_p=0.95 gconfig.temperature=0.7 gconfig.n_samples=32 rollout.max_concurrent_rollouts=64
 ```
 
 ## Experiments
@@ -151,5 +154,3 @@ The former adds partial hints based on `hint_percentage` of the question, and th
 
 To include code domains, we added `CodeVerifyWorker` under `areal.reward`, as well as `areal.utils.pyext2` and `areal.utils.pytest_util` which we imported from the [TACO repository](https://github.com/FlagOpen/TACO).
 
-## TODO
-- [ ] Run dynamic batch size rather than filtering.
