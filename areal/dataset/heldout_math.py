@@ -24,7 +24,7 @@ def get_olympiad_bench_rl_dataset(
                 "content": sample["question"]
             }
         ]
-        return {"messages": messages}
+        return {"messages": messages, "answer": sample["final_answer"][0]}
 
     dataset = dataset.map(process).remove_columns(["question"])
 
@@ -85,7 +85,45 @@ def get_aime24_rl_dataset(
     tokenizer,
     max_length: int | None = None,
 ):
-    dataset = load_dataset(path="HuggingFaceH4/aime_2024", split="train")
+    dataset = load_dataset(path="math-ai/aime24", split="test")
+
+    def process(sample):
+        messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": sample["problem"]
+            }
+        ]
+        return {"messages": messages, "answer": sample["solution"]}
+
+    dataset = dataset.map(process).remove_columns(["problem", "solution"])
+
+    # Filter out sequences longer than max_length if tokenizer and max_length are provided
+    if max_length is not None:
+
+        def filter_length(sample):
+            # Tokenize the user content to check length
+            content = sample["messages"][1]["content"]
+            tokens = tokenizer.encode(content)
+            return len(tokens) <= max_length
+
+        dataset = dataset.filter(filter_length)
+
+    return dataset
+
+
+
+def get_hmmt_feb_2025_rl_dataset(
+    path: str,
+    split: str,
+    tokenizer,
+    max_length: int | None = None,
+):
+    dataset = load_dataset(path="MathArena/hmmt_feb_2025", split="train")
 
     def process(sample):
         messages = [
@@ -100,7 +138,45 @@ def get_aime24_rl_dataset(
         ]
         return {"messages": messages}
 
-    dataset = dataset.map(process).remove_columns(["problem", "solution"])
+    dataset = dataset.map(process).remove_columns(["problem"])
+
+    # Filter out sequences longer than max_length if tokenizer and max_length are provided
+    if max_length is not None:
+
+        def filter_length(sample):
+            # Tokenize the user content to check length
+            content = sample["messages"][1]["content"]
+            tokens = tokenizer.encode(content)
+            return len(tokens) <= max_length
+
+        dataset = dataset.filter(filter_length)
+
+    return dataset
+
+
+
+def get_brumo_2025_rl_dataset(
+    path: str,
+    split: str,
+    tokenizer,
+    max_length: int | None = None,
+):
+    dataset = load_dataset(path="MathArena/brumo_2025", split="train")
+
+    def process(sample):
+        messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": sample["problem"]
+            }
+        ]
+        return {"messages": messages}
+
+    dataset = dataset.map(process).remove_columns(["problem"])
 
     # Filter out sequences longer than max_length if tokenizer and max_length are provided
     if max_length is not None:

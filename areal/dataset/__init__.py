@@ -20,6 +20,8 @@ VALID_DATASETS = [
     "aime24",
     "aime25",
     "olympiad_bench",
+    "brumo_2025",
+    "hmmt_feb_2025",
 ]
 
 logger = logging.getLogger("Dataset")
@@ -75,7 +77,7 @@ def _get_custom_dataset(
             **kwargs,
         )
     elif "aime24" in path and type == "rl":
-        from .olympiad_bench import get_aime24_rl_dataset
+        from .heldout_math import get_aime24_rl_dataset
 
         return get_aime24_rl_dataset(
             path=path,
@@ -85,7 +87,7 @@ def _get_custom_dataset(
             **kwargs,
         )
     elif "aime25" in path and type == "rl":
-        from .olympiad_bench import get_aime25_rl_dataset
+        from .heldout_math import get_aime25_rl_dataset
 
         return get_aime25_rl_dataset(
             path=path,
@@ -95,9 +97,29 @@ def _get_custom_dataset(
             **kwargs,
         )
     elif "olympiad_bench" in path and type == "rl":
-        from .olympiad_bench import get_olympiad_bench_rl_dataset
+        from .heldout_math import get_olympiad_bench_rl_dataset
 
         return get_olympiad_bench_rl_dataset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "hmmt_feb_2025" in path and type == "rl":
+        from .heldout_math import get_hmmt_feb_2025_rl_dataset
+
+        return get_hmmt_feb_2025_rl_dataset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "brumo_2025" in path and type == "rl":
+        from .heldout_math import get_brumo_2025_rl_dataset
+
+        return get_brumo_2025_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,
