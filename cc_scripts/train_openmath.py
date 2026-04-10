@@ -2,11 +2,10 @@ import _pickle as pickle
 import os
 import sys
 
-from areal import PPOTrainer, CurriculumPPOTrainer
+from areal import CurriculumPPOTrainer
 from areal.api.cli_args import GRPOConfig, load_expr_config
 from areal.dataset import get_custom_dataset
 from areal.utils.hf_utils import load_hf_tokenizer
-from areal.utils.dynamic_filter import filter_always_fail_pass
 
 
 def main(args):
@@ -27,42 +26,27 @@ def main(args):
 
     valid_dataset = None
 
-    if config.dynamic_hint is None:
-        print("Using PPOTrainer.")
-        with PPOTrainer(
-            config,
-            train_dataset=train_dataset,
-            valid_dataset=valid_dataset,
-        ) as trainer:
-            trainer.train(
-                workflow="areal.workflow.rlvr.RLVRWorkflow",
-                workflow_kwargs=workflow_kwargs,
-                dynamic_filter_fn=filter_always_fail_pass,
-            )
+    print("Using CurriculumPPOTrainer with dynamic hint generation.")
+    hint_percentage_path = os.path.join(config.actor.path, "hint_percentage.pkl")
+    if os.path.isfile(hint_percentage_path):
+        with open(hint_percentage_path, "rb") as f:
+            hint_percentage = pickle.load(f)
     else:
-        print("Using CurriculumPPOTrainer with dynamic hint generation.")
+        hint_percentage = dict(
+            initial_hint=config.dynamic_hint.initial_hint
+        )
+    workflow_kwargs["hint_percentage"] = hint_percentage
+    print(workflow_kwargs)
 
-        hint_percentage_path = os.path.join(config.actor.path, "hint_percentage.pkl")
-        if os.path.isfile(hint_percentage_path):
-            with open(hint_percentage_path, "rb") as f:
-                hint_percentage = pickle.load(f)
-        else:
-            hint_percentage = dict(
-                initial_hint=config.dynamic_hint.initial_hint
-            )
-        workflow_kwargs["hint_percentage"] = hint_percentage
-        print(workflow_kwargs)
-
-        with CurriculumPPOTrainer(
-            config,
-            train_dataset=train_dataset,
-            valid_dataset=valid_dataset,
-        ) as trainer:
-            trainer.train(
-                workflow="areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow",
-                workflow_kwargs=workflow_kwargs,
-                dynamic_filter_fn=filter_always_fail_pass,
-            )
+    with CurriculumPPOTrainer(
+        config,
+        train_dataset=train_dataset,
+        valid_dataset=valid_dataset,
+    ) as trainer:
+        trainer.train(
+            workflow="areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow",
+            workflow_kwargs=workflow_kwargs,
+        )
 
 
 if __name__ == "__main__":

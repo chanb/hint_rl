@@ -29,10 +29,6 @@ mkdir -p <PATH_TO>/datasets/questa/data/
 cd <PATH_TO>/datasets/questa
 wget https://huggingface.co/datasets/foreverlasting1202/QuestA/resolve/main/OpenR1-50-0-4.jsonl
 
-mkdir -p <PATH_TO>/datasets/apps/data/
-cd <PATH_TO>/datasets/apps
-wget https://huggingface.co/datasets/codeparrot/apps/resolve/main/train.jsonl
-
 cd <PATH_TO>/hint_rl/cc_scripts/datasets
 code_path=<PATH_TO>/hint_rl dataset_path=<PATH_TO>/datasets/questa ./make_hint_sweep.sh
 ```
@@ -107,6 +103,7 @@ dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.
 **Modify the paths before executing below!!!!**
 
 ### Math domain
+Expect both QuestA and DAPO to run a little bit slower because the success rate is worse than starting from 100% hint.
 ```
 cd <PATH_TO>/hint_rl/cc_scripts
 
@@ -154,17 +151,5 @@ The former adds partial hints based on `hint_percentage` of the question, and th
 
 To include code domains, we added `CodeVerifyWorker` under `areal.reward`, as well as `areal.utils.pyext2` and `areal.utils.pytest_util` which we imported from the [TACO repository](https://github.com/FlagOpen/TACO).
 
-## Salient commands
-```
-python /home/bryanpu1/projects/neurips_2026/hint_rl/cc_scripts/train_openmath_opsd.py \
-    --config /home/bryanpu1/projects/neurips_2026/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
-    cluster.fileroot=/home/bryanpu1/projects/neurips_2026/scratch \
-    cluster.name_resolve.nfs_record_root=/home/bryanpu1/projects/neurips_2026/scratch/name_resolve \
-    stats_logger.tensorboard.path=/home/bryanpu1/projects/neurips_2026/scratch/tensorboard \
-    allocation_mode=sglang:d2p1t1+fsdp:d2 \
-    train_dataset.path=/home/bryanpu1/projects/neurips_2026/datasets/questa/data/openr1_hint_sep \
-    train_dataset.batch_size=4 \
-    rollout.max_concurrent_rollouts=24 \
-    rollout.queue_size=4 \
-    gconfig.n_samples=2
-```
+## TODO
+- [ ] Run dynamic batch size rather than filtering.
