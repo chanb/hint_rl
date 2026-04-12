@@ -77,6 +77,35 @@ The sweet spot on Vulcan seems to be two nodes for rollout and two nodes for tra
 
 To maximize your GPU utilization, only change `rollout.max_concurrent_rollouts`, `rollout.queue_size`, and `allocation_mode`.
 
+### Debug training algorithm (Requires at least 2 GPUs)
+```
+# Create small dataset
+tail -16 ${dataset_path}/data/train-hint_sep.jsonl > ${dataset_path}/data/train-hint_sep-small.jsonl
+python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep-small.jsonl --output=${dataset_path}/data/openr1_hint_sep-small
+
+# Run training (run again to recover)
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
+    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_hint_rl.yaml \
+    train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
+    train_dataset.batch_size=8 \
+    experiment_name=debug-openmath-hint_rl \
+    trial_name=debug \
+    rollout.max_concurrent_rollouts=16 \
+    rollout.queue_size=16 \
+    allocation_mode=sglang:d1p1t1+d1
+
+# Run training (run again to recover)
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
+    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_questa.yaml \
+    train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
+    train_dataset.batch_size=8 \
+    experiment_name=debug-openmath-questa \
+    trial_name=debug \
+    rollout.max_concurrent_rollouts=16 \
+    rollout.queue_size=16 \
+    allocation_mode=sglang:d1p1t1+d1 \
+    dynamic_hint.dynamic_hint_schedule.change_steps=[3]
+```
 
 ### Hint RL visualization
 Run `cc_scripts/plots/check_hint_change.ipynb` to plot out how the hint % changes over time.

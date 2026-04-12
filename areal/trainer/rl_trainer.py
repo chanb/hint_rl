@@ -1041,6 +1041,21 @@ class CurriculumPPOTrainer(PPOTrainer):
             else 0
         )
 
+        if self.recover_info is not None:
+            recover_path = RecoverHandler.recover_info_path(
+                self.config.experiment_name,
+                self.config.trial_name,
+                self.config.cluster.fileroot,
+            )
+            (workflow_kwargs['hint_percentage'], next_hint_schedule) = pickle.load(
+                open(os.path.join(recover_path, "hint_percentage.pkl"), "rb")
+            )
+
+            logger.info("Recovered hint percentage: {}".format(workflow_kwargs['hint_percentage']))
+            logger.info("Recovered next hint schedule: {}".format(next_hint_schedule))
+        else:
+            next_hint_schedule = 0
+
         if total_epochs is None:
             total_epochs = config.total_train_epochs
         if total_epochs <= 0:
@@ -1062,7 +1077,6 @@ class CurriculumPPOTrainer(PPOTrainer):
         elif self._requires_proxy_workflow(workflow):
             self._ensure_proxy_started()
 
-        curr_hint_schedule = 0
         for global_step in range(start_step, max_steps):
             if (
                 config.total_train_steps is not None
@@ -1073,18 +1087,18 @@ class CurriculumPPOTrainer(PPOTrainer):
             step = global_step % steps_per_epoch
 
             if config.dynamic_hint.dynamic_hint_schedule is not None:
-                if global_step == config.dynamic_hint.dynamic_hint_schedule.change_steps[curr_hint_schedule]:
+                if global_step == config.dynamic_hint.dynamic_hint_schedule.change_steps[next_hint_schedule]:
                     workflow_kwargs["hint_percentage"]["initial_hint"] = (
-                        config.dynamic_hint.dynamic_hint_schedule.hint_percentages[curr_hint_schedule]
+                        config.dynamic_hint.dynamic_hint_schedule.hint_percentages[next_hint_schedule]
                     )
 
                     logger.info("Hint schedule change {} at global step {}".format(
-                        config.dynamic_hint.dynamic_hint_schedule.hint_percentages[curr_hint_schedule],
-                        config.dynamic_hint.dynamic_hint_schedule.change_steps[curr_hint_schedule],
+                        config.dynamic_hint.dynamic_hint_schedule.hint_percentages[next_hint_schedule],
+                        config.dynamic_hint.dynamic_hint_schedule.change_steps[next_hint_schedule],
                     ))
 
-                    curr_hint_schedule = min(
-                        curr_hint_schedule + 1,
+                    next_hint_schedule = min(
+                        next_hint_schedule + 1,
                         len(config.dynamic_hint.dynamic_hint_schedule.hint_percentages) - 1
                     )
 
@@ -1135,18 +1149,6 @@ class CurriculumPPOTrainer(PPOTrainer):
                     if modified:
                         logger.info(f"Updated hint percentages: {workflow_kwargs['hint_percentage']}")
 
-            if self.critic is not None:
-                with (
-                    stats_tracker.record_timing("critic_values"),
-                    perf_tracer.trace_scope(
-                        "train.compute_values",
-                        category=Category.COMPUTE,
-                        args={"global_step": global_step},
-                    ),
-                ):
-                    rollout_batch["values"] = self.critic.compute_values(rollout_batch)
-                    self.critic.get_device_stats().log("critic values")
-
             if config.actor.should_compute_prox_logp():
                 with (
                     stats_tracker.record_timing("recompute_logp"),
@@ -1158,36 +1160,6 @@ class CurriculumPPOTrainer(PPOTrainer):
                 ):
                     rollout_batch["prox_logp"] = self.actor.compute_logp(rollout_batch)
                     self.actor.get_device_stats().log("recompute logp")
-
-            if self.ref is not None:
-                with (
-                    stats_tracker.record_timing("ref_logp"),
-                    perf_tracer.trace_scope(
-                        "train.ref_logp",
-                        category=Category.COMPUTE,
-                        args={"global_step": global_step},
-                    ),
-                ):
-                    rollout_batch["ref_logp"] = self.ref.compute_logp(rollout_batch)
-                    self.ref.get_device_stats().log("ref logp")
-
-            if self.teacher is not None:
-                with (
-                    stats_tracker.record_timing("teacher_logp"),
-                    perf_tracer.trace_scope(
-                        "train.teacher_logp",
-                        category=Category.COMPUTE,
-                        args={"global_step": global_step},
-                    ),
-                ):
-                    rollout_batch["teacher_logp"] = self.teacher.compute_logp(
-                        rollout_batch
-                    )
-                    rollout_batch["rl_loss_weight"] = self.config.teacher.rl_loss_weight
-                    rollout_batch["distill_loss_weight"] = (
-                        self.config.teacher.distill_loss_weight
-                    )
-                    self.teacher.get_device_stats().log("teacher logp")
 
             with (
                 stats_tracker.record_timing("compute_advantage"),
@@ -1214,19 +1186,6 @@ class CurriculumPPOTrainer(PPOTrainer):
                 self.actor.ppo_update(adv_batch)
                 self.actor.step_lr_scheduler()
                 self.actor.get_device_stats().log("ppo update")
-
-            if self.critic is not None:
-                with (
-                    stats_tracker.record_timing("critic_train_step"),
-                    perf_tracer.trace_scope(
-                        "train.critic_ppo_update",
-                        category=Category.COMPUTE,
-                        args={"global_step": global_step},
-                    ),
-                ):
-                    self.critic.ppo_update(adv_batch)
-                    self.critic.step_lr_scheduler()
-                    self.critic.get_device_stats().log("ppo critic update")
 
             # pause inference for updating weights, save, and evaluation
             self.rollout.pause()
@@ -1300,6 +1259,19 @@ class CurriculumPPOTrainer(PPOTrainer):
                 self._save_recover_checkpoint(
                     epoch=epoch, epoch_step=step, global_step=global_step
                 )
+                if self.recover_handler.freq_ctl.check(
+                    epochs=int(step == self.recover_handler.ft_spec.steps_per_epoch - 1), steps=1
+                ):
+                    recover_path = RecoverHandler.recover_info_path(
+                        self.config.experiment_name,
+                        self.config.trial_name,
+                        self.config.cluster.fileroot,
+                    )
+
+                    pickle.dump(
+                        (workflow_kwargs['hint_percentage'], next_hint_schedule),
+                        open(os.path.join(recover_path, "hint_percentage.pkl"), "wb"),
+                    )
 
             with (
                 stats_tracker.record_timing("eval"),
