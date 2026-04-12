@@ -21,5 +21,4 @@ python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
     actor.path=/home/chanb/scratch/hint_rl_results/checkpoints/chanb/openmath-questa/local_train/default/epoch6epochstep13globalstep97 \
     trial_name=load_from_globalstep_98 \
     total_train_epochs=43 \
-    dynamic_hint.dynamic_hint_schedule.change_steps=[2] \
-    seed=2
+    dynamic_hint.dynamic_hint_schedule.change_steps=[2]
