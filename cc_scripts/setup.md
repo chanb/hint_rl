@@ -98,6 +98,10 @@ python <PATH_TO>/hint_rl/cc_scripts/eval_math.py --config <PATH_TO>/hint_rl/cc_s
 # Slurm
 dat_file=<PATH_TO>/eval_configs-*.dat <PATH_TO>/hint_rl/cc_scripts/slurm/eval_*.sh
 
+# Training progress of a model evaluated on training set without hint, e.g. using our model
+python create_training_progress_eval.py --models_dir=<PATH_TO>/checkpoints/chanb/openmath-hint_rl/local_train/default/ --dataset_path=<PATH_TO>/datasets/questa/data/openr1_0 --exp_name=hint_rl
+dat_file=eval_configs-train_curve-hint_rl.dat ./eval_openmath.sh
+
 # Eval heldout math
 # NOTE: Modify actor_path to run your model
 <PATH_TO>/hint_rl/cc_scripts/slurm/eval_heldout_math.sh
