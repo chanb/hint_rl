@@ -16,6 +16,12 @@ cluster:
 
 allocation_mode: sglang:d1p1t1
 
+dynamic_hint:
+  initial_hint: 75
+  goldilock_zone: [0.0, 1.0]
+  hint_delta: 0
+  dynamic_hint_schedule: null
+
 scheduler:
   type: local
 

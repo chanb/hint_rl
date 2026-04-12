@@ -86,7 +86,7 @@ def main(args):
             tokenizer=config.tokenizer_path,
             enable_thinking=False,
             hint_percentage=dict(
-                initial_hint=50
+                initial_hint=config.dynamic_hint.initial_hint
             ),
         )
 
