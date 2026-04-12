@@ -159,3 +159,10 @@ The former adds partial hints based on `hint_percentage` of the question, and th
 
 To include code domains, we added `CodeVerifyWorker` under `areal.reward`, as well as `areal.utils.pyext2` and `areal.utils.pytest_util` which we imported from the [TACO repository](https://github.com/FlagOpen/TACO).
 
+### Code hang
+```
+for pid in $(ps aux | grep 'python.*areal' | grep -v grep | awk '{print $2}'); do
+    echo "========== PID $pid =========="
+    sudo env "PATH=$PATH" py-spy dump --pid $pid
+done
+```

@@ -242,8 +242,8 @@ class PPOActor:
         ).expand(bs, max_seqlen)
         shifted_seq_indices = (seq_indices - data["roll"].unsqueeze(1)) % max_seqlen
 
-        torch.gather(data["hint_loss_mask"], 1, shifted_seq_indices)
         data["prox_hint_logp"] = torch.gather(data["prox_hint_logp"], 1, shifted_seq_indices)
+        data["loss_mask"] = torch.gather(data["loss_mask"], 1, shifted_seq_indices)
         advantages = data["prox_hint_logp"] - data["prox_logp"]
         data["returns"] = advantages
 

@@ -1487,15 +1487,6 @@ class OPSDTrainer(PPOTrainer):
                 # calling `clear_batches` once should be sufficient.
                 self.actor.clear_batches(rollout_batch, adv_batch)
 
-            with perf_tracer.trace_scope(
-                "train.log_stats",
-                category=Category.INSTR,
-                args={"global_step": global_step},
-            ):
-                self._export_and_commit_stats(
-                    epoch=epoch, epoch_step=step, global_step=global_step
-                )
-
             with (
                 stats_tracker.record_timing("save"),
                 perf_tracer.trace_scope(
@@ -1548,6 +1539,15 @@ class OPSDTrainer(PPOTrainer):
                     epoch=epoch,
                     epoch_step=step,
                     global_step=global_step,
+                )
+
+            with perf_tracer.trace_scope(
+                "train.log_stats",
+                category=Category.INSTR,
+                args={"global_step": global_step},
+            ):
+                self._export_and_commit_stats(
+                    epoch=epoch, epoch_step=step, global_step=global_step
                 )
 
             # Resume rollout

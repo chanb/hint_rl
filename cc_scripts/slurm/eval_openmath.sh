@@ -32,7 +32,7 @@ for i in $(seq 1 $NUM_TASKS); do
   prev_job_id=$(sbatch --parsable \
     --account=aip-schuurma \
     --time=12:00:00 \
-    --mem=32GB \
+    --mem=20GB \
     --cpus-per-task=2 \
     --gres=gpu:l40s:1 \
     --output=/home/chanb/scratch/logs/hint_rl/%j.out \
