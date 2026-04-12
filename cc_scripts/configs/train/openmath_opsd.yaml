@@ -21,8 +21,8 @@ scheduler:
 
 dynamic_hint:
   initial_hint: 100
-  goldilock_zone: [0.5, 0.75]
-  hint_delta: 10
+  goldilock_zone: [0.0, 1.0]
+  hint_delta: 0
   dynamic_hint_schedule: null
 
 rollout:
