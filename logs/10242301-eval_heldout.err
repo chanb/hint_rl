@@ -1,0 +1,31 @@
+Using the latest cached version of the dataset since math-ai/aime24 couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/fengdic/.cache/huggingface/datasets/math-ai___aime24/default/0.0.0/83a7f387baaa524a8bda0022eac0541582297103 (last modified on Sun Apr 12 00:05:06 2026).
+Traceback (most recent call last):
+  File "/home/fengdic/evan_workspace/hint_rl/cc_scripts/eval_math.py", line 128, in <module>
+    main(sys.argv[1:])
+  File "/home/fengdic/evan_workspace/hint_rl/cc_scripts/eval_math.py", line 73, in main
+    eval_rollout.initialize(
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/controller/rollout_controller.py", line 193, in initialize
+    run_async_task(
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/utils/concurrent.py", line 69, in run_async_task
+    return asyncio.run(func(*args, **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/python/3.12.4/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/python/3.12.4/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/controller/rollout_controller.py", line 285, in _async_initialize
+    self.server_infos = await self._collective_rpc_async(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/controller/rollout_controller.py", line 661, in _collective_rpc_async
+    return await self._generic_collective_rpc_async(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/controller/rollout_controller.py", line 693, in _generic_collective_rpc_async
+    return await asyncio.gather(*tasks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/scheduler/local.py", line 1421, in async_call_engine
+    raise EngineCallError(
+areal.infra.scheduler.exceptions.EngineCallError: Failed to call method 'launch_server' on worker 'eval-rollout/0': Unknown error

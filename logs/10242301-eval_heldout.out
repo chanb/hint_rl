@@ -1,0 +1,167 @@
+========================================
+  Host:    rg32003
+  GPU:     GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-f0f0967b-db40-000b-5a32-730c95a985a8)
+  Started: Sun 12 Apr 2026 11:18:01 PM EDT
+========================================
+  trial:   eval_aime24-nemotron_base
+  actor:   /home/fengdic/scratch/models/OpenMath-Nemotron-1.5B
+  dataset: aime24
+[33m[1;38;2;180;140;80m(AReaL)[0m [33m20260412-23:18:24.688 CLIArgs WARNING: behave_imp_weight_cap and behave_imp_weight_mode are configured but use_decoupled_loss=False. These settings will be ignored. Set use_decoupled_loss=True to enable decoupled loss with importance weight correction.[0m
+[33m[1;38;2;180;140;80m(AReaL)[0m [33m20260412-23:18:24.731 CLIArgs WARNING: behave_imp_weight_cap and behave_imp_weight_mode are configured but use_decoupled_loss=False. These settings will be ignored. Set use_decoupled_loss=True to enable decoupled loss with importance weight correction.[0m
+[96m[1;38;2;180;140;80m(AReaL)[0m [96m20260412-23:18:25.071 PlatformInit INFO: Detected CUDA device: NVIDIA H100 80GB HBM3[0m
+[96m[1;38;2;180;140;80m(AReaL)[0m [96m20260412-23:18:25.072 PlatformInit INFO: Initializing CUDA platform (NVIDIA).[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:25.227 NameResolve INFO: Removing name resolve path: /scratch/fengdic/hint_rl_results/name_resolve/fengdic/eval_aime24/eval_aime24-nemotron_base[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:18:25.233 LocalScheduler INFO: LocalScheduler initialized with GPU devices: [0], log directory: /scratch/fengdic/hint_rl_results/logs/fengdic/eval_aime24/eval_aime24-nemotron_base[0m
+[33m[1;38;2;180;140;80m(AReaL)[0m [33m20260412-23:18:25.389 RolloutController WARNING: Placement strategy 'shared' is not supported for rollouts. Forcing to 'separate' strategy[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:25.394 RolloutController INFO: Creating workers via scheduler...[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:18:25.394 LocalScheduler INFO: Creating 1 workers for role 'eval-rollout' (strategy: SchedulingStrategyType.separation, colocate_with: None)[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:25.394 LauncherUtils INFO: Auto-setting thread env vars to 8: OMP_NUM_THREADS, MKL_NUM_THREADS, OPENBLAS_NUM_THREADS, VECLIB_MAXIMUM_THREADS, NUMEXPR_NUM_THREADS[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:18:25.394 LocalScheduler INFO: Starting worker eval-rollout/0: python3 -m areal.infra.rpc.rpc_server --port 36355 --experiment-name eval_aime24 --trial-name eval_aime24-nemotron_base --role eval-rollout --worker-index 0 --name-resolve-type nfs --nfs-record-root /scratch/fengdic/hint_rl_results/name_resolve --etcd3-addr localhost:2379 --fileroot /scratch/fengdic/hint_rl_results[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:18:25.496 LocalScheduler INFO: Worker eval-rollout/0 started (PID: 2945928, GPUs: [0], ports: [36355, 54913])[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:18:25.498 LocalScheduler INFO: Successfully created 1 workers for role 'eval-rollout'[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.907 SyncRPCServer INFO: Starting sync RPC server on 10.83.100.103:36355 for worker eval-rollout/0[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.907 SyncRPCServer INFO: Werkzeug log level: WARNING[0m
+[33m[1;38;2;180;140;80m(AReaL)[0m [33m20260412-23:18:34.970 CLIArgs WARNING: behave_imp_weight_cap and behave_imp_weight_mode are configured but use_decoupled_loss=False. These settings will be ignored. Set use_decoupled_loss=True to enable decoupled loss with importance weight correction.[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.970 SyncRPCServer INFO: Engine thread started[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.970 SyncRPCServer INFO: Engine thread initialized[0m
+[96m[1;38;2;180;140;80m(AReaL)[0m [96m20260412-23:18:34.978 PlatformInit INFO: Detected CUDA device: NVIDIA H100 80GB HBM3[0m
+[96m[1;38;2;180;140;80m(AReaL)[0m [96m20260412-23:18:34.978 PlatformInit INFO: Initializing CUDA platform (NVIDIA).[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:18:34.979 LocalScheduler INFO: Configuration successfully on worker 'eval-rollout/0'[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.981 RolloutController INFO: Workers created: ['eval-rollout/0'][0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.981 RolloutController INFO: Waiting for workers to be ready...[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:18:34.983 LocalScheduler INFO: All 1 workers for role 'eval-rollout' are ready[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.983 RolloutController INFO: Workers ready: ['eval-rollout/0'][0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.983 RolloutController INFO: Creating engines...[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.985 SyncRPCServer INFO: Engine 'eval-rollout/0' (class: areal.engine.sglang_remote.RemoteSGLangEngine) instantiated successfully[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.986 RolloutController INFO: Engine created on all workers![0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:18:34.986 RolloutController INFO: Calling engine initialization...[0m
+[2026-04-12 23:18:47] Fail to set RLIMIT_NOFILE: current limit exceeds maximum limit
+[2026-04-12 23:18:47] No HuggingFace chat template found
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[2026-04-12 23:18:59] Ignore import error when loading sglang.srt.models.glm_ocr: No module named 'transformers.models.glm_ocr'
+[2026-04-12 23:18:59] Ignore import error when loading sglang.srt.models.glm_ocr_nextn: No module named 'transformers.models.glm_ocr'
+[2026-04-12 23:18:59] Ignore import error when loading sglang.srt.models.glmasr: cannot import name 'GlmAsrConfig' from 'transformers' (/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/transformers/__init__.py)
+Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:09<00:00,  9.57s/it]
+Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:09<00:00,  9.57s/it]
+
+  0%|          | 0/36 [00:00<?, ?it/s]Capturing batches (bs=256 avail_mem=0.06 GB):   0%|          | 0/36 [00:00<?, ?it/s]Capturing batches (bs=256 avail_mem=0.06 GB):   0%|          | 0/36 [00:00<?, ?it/s]
+[2026-04-12 23:19:10] Scheduler hit an exception: Traceback (most recent call last):
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/cuda_graph_runner.py", line 370, in __init__
+    self.capture()
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/cuda_graph_runner.py", line 526, in capture
+    _capture_one_stream()
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/cuda_graph_runner.py", line 513, in _capture_one_stream
+    ) = self.capture_one_batch_size(bs, forward, stream_idx)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/cuda_graph_runner.py", line 732, in capture_one_batch_size
+    run_once()
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/cuda_graph_runner.py", line 719, in run_once
+    logits_output_or_pp_proxy_tensors = forward(
+                                        ^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/models/qwen2.py", line 482, in forward
+    hidden_states = self.model(
+                    ^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/models/qwen2.py", line 363, in forward
+    hidden_states, residual = layer(
+                              ^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/models/qwen2.py", line 249, in forward
+    hidden_states = self.self_attn(
+                    ^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/models/qwen2.py", line 185, in forward
+    qkv, _ = self.qkv_proj(hidden_states)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/layers/linear.py", line 451, in forward
+    output_parallel = self.quant_method.apply(self, input_, bias)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/layers/quantization/unquant.py", line 152, in apply
+    return F.linear(x, layer.weight, bias)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 32.00 MiB. GPU 0 has a total capacity of 79.19 GiB of which 59.06 MiB is free. Process 2209362 has 72.43 GiB memory in use. Including non-PyTorch memory, this process has 6.67 GiB memory in use. Of the allocated memory 5.81 GiB is allocated by PyTorch, and 139.61 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/managers/scheduler.py", line 3130, in run_scheduler_process
+    scheduler = Scheduler(
+                ^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/managers/scheduler.py", line 368, in __init__
+    self.init_model_worker()
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/managers/scheduler.py", line 564, in init_model_worker
+    self.init_tp_model_worker()
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/managers/scheduler.py", line 522, in init_tp_model_worker
+    self.tp_worker = TpModelWorker(
+                     ^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/managers/tp_worker.py", line 247, in __init__
+    self._init_model_runner()
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/managers/tp_worker.py", line 330, in _init_model_runner
+    self._model_runner = ModelRunner(
+                         ^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/model_runner.py", line 413, in __init__
+    self.initialize(min_per_gpu_memory)
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/model_runner.py", line 609, in initialize
+    self.init_device_graphs()
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/model_runner.py", line 2156, in init_device_graphs
+    self.graph_runner = graph_runners[self.device](self)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/cuda_graph_runner.py", line 372, in __init__
+    raise Exception(
+Exception: Capture cuda graph failed: CUDA out of memory. Tried to allocate 32.00 MiB. GPU 0 has a total capacity of 79.19 GiB of which 59.06 MiB is free. Process 2209362 has 72.43 GiB memory in use. Including non-PyTorch memory, this process has 6.67 GiB memory in use. Of the allocated memory 5.81 GiB is allocated by PyTorch, and 139.61 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+Possible solutions:
+1. set --mem-fraction-static to a smaller value (e.g., 0.8 or 0.7)
+2. set --cuda-graph-max-bs to a smaller value (e.g., 16)
+3. disable torch compile by not using --enable-torch-compile
+4. disable CUDA graph by --disable-cuda-graph. (Not recommended. Huge performance loss)
+Open an issue on GitHub https://github.com/sgl-project/sglang/issues/new/choose 
+
+
+[2026-04-12 23:19:10] Received sigquit from a child process. It usually means the child failed.
+[33m[1;38;2;180;140;80m(AReaL)[0m [33m20260412-23:23:36.074 RemoteInfEngine WARNING: Launch local server timeouted at 10.83.100.103:42197 after 300.0s.[0m
+[31m[1;38;2;180;140;80m(AReaL)[0m [31m20260412-23:23:36.077 SyncRPCServer ERROR: Engine method 'launch_server' failed: server launch failed
+Traceback (most recent call last):
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/rpc/rpc_server.py", line 750, in execute_in_engine_thread
+    result = method(*args_bcast, **kwargs_bcast)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/areal/engine/sglang_remote.py", line 481, in launch_server
+    return self._engine.launch_server(server_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/remote_inf_engine.py", line 1247, in launch_server
+    self._wait_for_server(address)
+  File "/home/fengdic/evan_workspace/hint_rl/areal/infra/remote_inf_engine.py", line 368, in _wait_for_server
+    raise TimeoutError("server launch failed")
+TimeoutError: server launch failed
+[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:23:36.080 LocalScheduler INFO: Deleting 1 workers for role 'eval-rollout'[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:23:36.099 ProcUtils INFO: Sending SIGTERM to process 2945928 and 4 children[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:23:36.152 ProcUtils INFO: Successfully cleaned up process tree for PID 2945928[0m
+[34m[1;38;2;180;140;80m(AReaL)[0m [34m20260412-23:23:36.152 LocalScheduler INFO: Successfully deleted workers for role 'eval-rollout'[0m
+[37m[1;38;2;180;140;80m(AReaL)[0m [37m20260412-23:23:36.153 RolloutController INFO: Workers deleted[0m
