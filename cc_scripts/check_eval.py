@@ -8,5 +8,10 @@ for filename in os.listdir(log_dir):
 
     rollout_dir = os.path.join(log_dir, filename, "rollout/0")
 
-    if not os.path.isdir(rollout_dir) or len(os.listdir(rollout_dir)) != 1853:
-        print(filename)
+    if not os.path.isdir(rollout_dir):
+        print(filename, "hasn't started")
+        continue
+
+    if len(os.listdir(rollout_dir)) != 1853:
+        print(filename, "unfinished")
+        continue

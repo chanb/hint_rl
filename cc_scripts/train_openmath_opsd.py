@@ -18,6 +18,7 @@ def main(args):
         tokenizer=tokenizer,
     )
     workflow_kwargs = dict(
+        reward_fn="areal.reward.gsm8k.gsm8k_reward_fn",
         gconfig=config.gconfig,
         tokenizer=config.tokenizer_path,
         enable_thinking=False,

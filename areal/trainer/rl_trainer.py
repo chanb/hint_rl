@@ -1383,6 +1383,10 @@ class OPSDTrainer(PPOTrainer):
                     rollout_batch["prox_logp"] = self.actor.compute_logp(rollout_batch)
                     self.actor.get_device_stats().log("recompute logp")
 
+
+            # pause inference for updating weights, save, and evaluation
+            self.rollout.pause()
+
             with (
                 stats_tracker.record_timing("compute_hint_logp"),
                 perf_tracer.trace_scope(
@@ -1393,10 +1397,21 @@ class OPSDTrainer(PPOTrainer):
             ):
                 # XXX: The OPSD paper uses a pretrained model rather than the currently updated model,
                 #      the claim is that it's more stable.
+                new_version = 0
+                versioned_meta = self.weight_update_meta.with_version(new_version)
+                self.actor.update_weights(versioned_meta)
+
+                self.actor.set_version(new_version)
                 rollout_batch["prox_hint_logp"] = self.actor.compute_logp({
                     "input_ids": rollout_batch["hint_input_ids"],
                     "attention_mask": rollout_batch["hint_attention_mask"],
                 })
+                new_version = global_step
+                versioned_meta = self.weight_update_meta.with_version(new_version)
+                self.actor.update_weights(versioned_meta)
+
+                self.actor.set_version(new_version)
+                self.actor.get_device_stats().log("compute hint logp")
 
             with (
                 stats_tracker.record_timing("compute_opsd_advantage"),
@@ -1423,9 +1438,6 @@ class OPSDTrainer(PPOTrainer):
                 self.actor.ppo_update(adv_batch)
                 self.actor.step_lr_scheduler()
                 self.actor.get_device_stats().log("ppo update")
-
-            # pause inference for updating weights, save, and evaluation
-            self.rollout.pause()
 
             with (
                 stats_tracker.record_timing("update_weights"),

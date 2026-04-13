@@ -86,6 +86,7 @@ class OPSDWorkflow(RolloutWorkflow):
 
     def __init__(
         self,
+        reward_fn: Callable[..., Any] | str,
         gconfig: GenerationHyperparameters,
         tokenizer: PreTrainedTokenizerFast | str,
         hint_percentage: dict[str, Any],
@@ -93,6 +94,7 @@ class OPSDWorkflow(RolloutWorkflow):
         get_input_ids_fn: Callable[[Any, PreTrainedTokenizerFast, bool], list[int]]
         | str = default_get_input_ids_fn,
     ):
+        self.reward_fn = reward_fn
         self.tokenizer = tokenizer
         if isinstance(self.tokenizer, str):
             from areal.utils.hf_utils import load_hf_tokenizer
@@ -101,12 +103,42 @@ class OPSDWorkflow(RolloutWorkflow):
             self.tokenizer = tokenizer
         self.gconfig = gconfig.new_with_stop_and_pad_token_ids(self.tokenizer)
         self.enable_thinking = enable_thinking
+        if not isinstance(reward_fn, str):
+            self.async_reward_fn = AsyncRewardWrapper(reward_fn)
         # Support string paths for get_input_ids_fn
         if isinstance(get_input_ids_fn, str):
             get_input_ids_fn = import_from_string(get_input_ids_fn)
         self.get_input_ids_fn = get_input_ids_fn
         # Support string paths for data_extract_prompt_fn
         self.data_extract_prompt_fn = make_data_extract_prompt_fn(hint_percentage)
+
+    @trace_session("reward")
+    async def _compute_rewards(
+        self,
+        resp: ModelResponse,
+        prompt_str: str,
+        task_data: dict[str, Any],
+    ) -> float:
+        """Decode completion and compute reward.
+
+        Traces reward phase execution for SessionTracer. Decodes output tokens
+        to string, calls async reward function, and logs metric to stats tracker.
+
+        Returns
+        -------
+        float
+            Reward value.
+        """
+        completions_str = self.tokenizer.decode(resp.output_tokens)
+        reward = await self.async_reward_fn(
+            prompt_str,
+            completions_str,
+            resp.input_tokens,
+            resp.output_tokens,
+            **task_data,
+        )
+
+        return reward
 
     @session_context()
     async def _collect_samples(
@@ -130,12 +162,19 @@ class OPSDWorkflow(RolloutWorkflow):
         async with atrace_session_phase("generate"):
             resp = await engine.agenerate(req)
 
-        return resp
+        reward = await self._compute_rewards(resp, prompt_str, task_data)
+
+        stats_tracker.get(workflow_context.stat_scope()).scalar(reward=reward)
+
+        return resp, reward
 
     async def arun_episode(
         self, engine: InferenceEngine, data: dict[str, Any]
     ) -> dict[str, torch.Tensor]:
         # NOTE: load reward function dynamically if given as string
+        if isinstance(self.reward_fn, str):
+            self.reward_fn = import_from_string(self.reward_fn)
+            self.async_reward_fn = AsyncRewardWrapper(self.reward_fn)
 
         input_ids = self.get_input_ids_fn(
             default_data_extract_prompt_fn(data),
@@ -158,7 +197,7 @@ class OPSDWorkflow(RolloutWorkflow):
         prompt_str = self.tokenizer.decode(input_ids)
 
         # Generate single response
-        resp = await self._collect_samples(engine, req, prompt_str, data)
+        resp, reward = await self._collect_samples(engine, req, prompt_str, data)
 
         # Build result tensor dict with batch dim 1
         seq = resp.input_tokens + resp.output_tokens
@@ -178,7 +217,7 @@ class OPSDWorkflow(RolloutWorkflow):
             "attention_mask": torch.ones(len(seq), dtype=torch.bool),
             "hint_attention_mask": torch.ones(len(hint_seq), dtype=torch.bool),
             "roll": torch.tensor(resp.input_len - len(hint_input_ids), dtype=torch.int32),
-            "rewards": torch.tensor(0.0),
+            "rewards": torch.tensor(reward, dtype=torch.float32),
             "id": torch.tensor(int(data["id"]), dtype=torch.int32) if "id" in data else torch.tensor(-1, dtype=torch.int32),
         }
         return {k: v.unsqueeze(0) for k, v in res.items()}

@@ -11,7 +11,7 @@ module load python/3.10.13
 module load cuda/12.9
 source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
 
-hint_percentage=75
+hint_percentage=100
 max_concurrent_rollouts=20
 python /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval_code-with_hints.py \
     --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/eval/eval_code.yaml \

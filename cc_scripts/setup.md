@@ -118,7 +118,7 @@ python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
     allocation_mode=sglang:d1p1t1+d1
 
 # OPSD: Run training (run again to recover)
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
+python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
     --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
     train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
     train_dataset.batch_size=8 \
