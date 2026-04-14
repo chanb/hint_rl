@@ -11,6 +11,12 @@ from torch.distributed.fsdp import (
 )
 from transformers import PreTrainedModel
 
+from areal.engine.fsdp_utils.optimizer import (
+    AdamKernel,
+    OptimKernel,
+    PerLayerOptimWrapper,
+)
+
 from areal.infra.platforms import current_platform
 from areal.utils import logging, pkg_version
 
@@ -26,6 +32,9 @@ __all__ = [
     "apply_fsdp2",
     "fsdp2_load_full_state_dict",
     "get_cosine_schedule_with_warmup",
+    "PerLayerOptimWrapper",
+    "OptimKernel",
+    "AdamKernel",
 ]
 
 
