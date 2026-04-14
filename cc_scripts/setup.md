@@ -77,16 +77,24 @@ The sweet spot on Vulcan seems to be two nodes for rollout and two nodes for tra
 
 To maximize your GPU utilization, only change `rollout.max_concurrent_rollouts`, `rollout.queue_size`, and `allocation_mode`.
 
+If the error comes from training update, specifically coming from the optimizer, we can add the following per-layer optimizer step to the training (see [here](https://github.com/inclusionAI/AReaL/pull/983) for the changes):
+```
+actor.fsdp.per_layer_optim_step=true
+actor.fsdp.optim_step_prefetch_layers=1
+```
+
 ### Debug training algorithm (Requires at least 2 GPUs)
 ```
 # Create small dataset
 tail -16 ${dataset_path}/data/train-hint_sep.jsonl > ${dataset_path}/data/train-hint_sep-small.jsonl
 python convert2hf.py --train_input=${dataset_path}/data/train-hint_sep-small.jsonl --output=${dataset_path}/data/openr1_hint_sep-small
 
+export repo_path=<PATH_TO>/hint_rl
+
 # Hint RL: Run training (run again to recover)
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
-    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_hint_rl.yaml \
-    train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
+python ${repo_path}$/cc_scripts/train_openmath.py \
+    --config ${repo_path}$/cc_scripts/configs/train/openmath_hint_rl.yaml \
+    train_dataset.path=${dataset_path}/data/openr1_hint_sep-small \
     train_dataset.batch_size=8 \
     experiment_name=debug-openmath-hint_rl \
     trial_name=debug \
@@ -95,9 +103,9 @@ python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
     allocation_mode=sglang:d1p1t1+d1
 
 # QuestA: Run training (run again to recover)
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
-    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_questa.yaml \
-    train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
+python ${repo_path}$/cc_scripts/train_openmath.py \
+    --config ${repo_path}$/cc_scripts/configs/train/openmath_questa.yaml \
+    train_dataset.path=${dataset_path}/data/openr1_hint_sep-small \
     train_dataset.batch_size=8 \
     experiment_name=debug-openmath-questa \
     trial_name=debug \
@@ -107,9 +115,9 @@ python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
     dynamic_hint.dynamic_hint_schedule.change_steps=[3]
 
 # GRPO: Run training (run again to recover)
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
-    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_dapo.yaml \
-    train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
+python ${repo_path}$/cc_scripts/train_openmath.py \
+    --config ${repo_path}$/cc_scripts/configs/train/openmath_dapo.yaml \
+    train_dataset.path=${dataset_path}/data/openr1_hint_sep-small \
     train_dataset.batch_size=8 \
     experiment_name=debug-openmath-grpo \
     trial_name=debug \
@@ -118,9 +126,9 @@ python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py \
     allocation_mode=sglang:d1p1t1+d1
 
 # OPSD: Run training (run again to recover)
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
-    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
-    train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
+python ${repo_path}$/cc_scripts/train_openmath_opsd.py \
+    --config ${repo_path}$/cc_scripts/configs/train/openmath_opsd.yaml \
+    train_dataset.path=${dataset_path}/data/openr1_hint_sep-small \
     train_dataset.batch_size=8 \
     experiment_name=debug-openmath-opsd \
     trial_name=debug \
