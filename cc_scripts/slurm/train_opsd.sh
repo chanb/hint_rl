@@ -26,12 +26,22 @@ source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
 #     allocation_mode=sglang:d1p1t1+d1
 
 
+# python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
+#     --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
+#     train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
+#     train_dataset.batch_size=8 \
+#     experiment_name=debug-openmath-opsd \
+#     trial_name=debug_with_ref_inplace \
+#     rollout.max_concurrent_rollouts=16 \
+#     rollout.queue_size=16 \
+#     allocation_mode=sglang:d1p1t1+d1
+
 python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
     --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
     train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
     train_dataset.batch_size=8 \
     experiment_name=debug-openmath-opsd \
-    trial_name=debug_with_ref_inplace \
+    trial_name=debug_with_ref_inplace-reverse_kl \
     rollout.max_concurrent_rollouts=16 \
     rollout.queue_size=16 \
     allocation_mode=sglang:d1p1t1+d1

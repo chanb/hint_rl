@@ -10,7 +10,7 @@ def main(args):
     assert os.path.isdir(models_dir)
 
     checkpoint_dirs = sorted(
-        os.listdir(models_dir),
+        [filename for filename in os.listdir(models_dir) if "globalstep" in filename],
         key=lambda key: int(key.split("globalstep")[-1]),
     )
 

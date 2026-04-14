@@ -244,7 +244,8 @@ class PPOActor:
 
         data["prox_hint_logp"] = torch.gather(data["prox_hint_logp"], 1, shifted_seq_indices)
         data["loss_mask"] = torch.gather(data["loss_mask"], 1, shifted_seq_indices)
-        advantages = data["prox_hint_logp"] - data["prox_logp"]
+        # advantages = data["prox_hint_logp"] - data["prox_logp"]
+        advantages = data["prox_logp"] - data["prox_hint_logp"]
         data["returns"] = advantages
 
         loss_mask = data["loss_mask"].float()
