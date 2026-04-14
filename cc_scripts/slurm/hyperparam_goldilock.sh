@@ -19,6 +19,8 @@ python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py --confi
     total_train_epochs=25 \
     experiment_name=hyperparam_sweep-goldilock \
     trial_name=${trial_name} \
+    +actor.fsdp.per_layer_optim_step=true \
+    +actor.fsdp.optim_step_prefetch_layers=1 \
     dynamic_hint.initial_hint=${initial_hint} \
     dynamic_hint.hint_delta=${hint_delta} \
     dynamic_hint.goldilock_zone=${goldilock_zone}
