@@ -236,6 +236,9 @@ class SGLangBackend:
         triton_cache_path = _env.get("TRITON_CACHE_PATH", TRITON_CACHE_PATH)
         _env["TRITON_CACHE_PATH"] = os.path.join(triton_cache_path, str(uuid.uuid4()))
 
+        _env.pop("LD_PRELOAD", None)
+        _env.pop("DYLD_INSERT_LIBRARIES", None)
+
         return subprocess.Popen(
             cmd,
             env=_env,

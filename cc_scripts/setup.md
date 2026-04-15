@@ -20,6 +20,14 @@ uv sync --extra cuda
 source <PATH_TO>/hint_rl/.venv/bin/activate
 ```
 
+### Downloading Models (Optional)
+We use Nemotron 1.5B across all math experiments--download the model using HF CLI:
+```
+mkdir -p <PATH_TO>/models
+export model_path=<PATH_TO>/models
+hf download nvidia/OpenMath-Nemotron-1.5B --local-dir ${model_path}/OpenMath-Nemotron-1.5B
+```
+
 ## Datasets
 ### QuestA datasets
 The `jsonl` files are stored in [here](https://huggingface.co/datasets/foreverlasting1202/QuestA/tree/main).
@@ -135,6 +143,23 @@ python ${repo_path}$/cc_scripts/train_openmath_opsd.py \
     rollout.max_concurrent_rollouts=16 \
     rollout.queue_size=16 \
     allocation_mode=sglang:d1p1t1+d1
+```
+
+### Debugging on AllianceCAN
+On some of the clusters you might run into an error related to `libc.so.6` or `ptxas`.
+The fix here is to include these environment variables in your config yaml:
+```
+actor:
+  scheduling_spec:
+    - ...
+      env_vars: {
+        "LD_PRELOAD": "",
+        "DYLD_INSERT_LIBRARIES": "",
+        "CUDA_HOME": "<RETRIEVE_FROM $CUDA_HOME>",
+        "PATH": "<RETRIEVE FROM $PATH>",
+        "TRITON_PTXAS_PATH": "<RETRIEVE_FROM $CUDA_HOME>/bin/ptxas"
+      }
+      ...
 ```
 
 ### Hint RL visualization
