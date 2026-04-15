@@ -19,6 +19,7 @@ VALID_DATASETS = [
     "questa",
     "aime24",
     "aime25",
+    "olympiad_bench",
     "brumo_2025",
     "hmmt_feb_2025",
 ]
@@ -89,6 +90,16 @@ def _get_custom_dataset(
         from .heldout_math import get_aime25_rl_dataset
 
         return get_aime25_rl_dataset(
+            path=path,
+            split=split,
+            tokenizer=tokenizer,
+            max_length=max_length,
+            **kwargs,
+        )
+    elif "olympiad_bench" in path and type == "rl":
+        from .heldout_math import get_olympiad_bench_rl_dataset
+
+        return get_olympiad_bench_rl_dataset(
             path=path,
             split=split,
             tokenizer=tokenizer,

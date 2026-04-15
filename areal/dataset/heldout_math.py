@@ -24,7 +24,7 @@ def get_aime25_rl_dataset(
                 "content": sample["problem"]
             }
         ]
-        return {"messages": messages}
+        return {"messages": messages, "answer": sample["answer"]}
 
     dataset = dataset.map(process).remove_columns(["problem"])
 
@@ -99,7 +99,7 @@ def get_hmmt_feb_2025_rl_dataset(
                 "content": sample["problem"]
             }
         ]
-        return {"messages": messages}
+        return {"messages": messages, "answer": sample["answer"]}
 
     dataset = dataset.map(process).remove_columns(["problem"])
 
@@ -137,7 +137,7 @@ def get_brumo_2025_rl_dataset(
                 "content": sample["problem"]
             }
         ]
-        return {"messages": messages}
+        return {"messages": messages, "answer": sample["answer"]}
 
     dataset = dataset.map(process).remove_columns(["problem"])
 
@@ -146,6 +146,53 @@ def get_brumo_2025_rl_dataset(
 
         def filter_length(sample):
             # Tokenize the user content to check length
+            content = sample["messages"][1]["content"]
+            tokens = tokenizer.encode(content)
+            return len(tokens) <= max_length
+
+        dataset = dataset.filter(filter_length)
+
+    return dataset
+
+
+def get_olympiad_bench_rl_dataset(
+    path: str,
+    split: str,
+    tokenizer,
+    max_length: int | None = None,
+):
+    dataset = load_dataset(path="lmms-lab/OlympiadBench", split="test_en")
+
+    # Filter out samples with no answer
+    dataset = dataset.filter(
+        lambda s: s["final_answer"] is not None
+        and len(s["final_answer"]) > 0
+        and s["final_answer"][0] is not None
+    )
+
+    # Save original columns before map so we can remove them
+    orig_cols = dataset.column_names
+
+    def process(sample):
+        messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": sample["question"],
+            },
+        ]
+        return {"messages": messages, "answer": sample["final_answer"][0]}
+
+    remove_cols = [c for c in orig_cols if c not in ("messages", "answer")]
+    dataset = dataset.map(process).remove_columns(remove_cols)
+
+    # Filter out sequences longer than max_length if tokenizer and max_length are provided
+    if max_length is not None:
+
+        def filter_length(sample):
             content = sample["messages"][1]["content"]
             tokens = tokenizer.encode(content)
             return len(tokens) <= max_length

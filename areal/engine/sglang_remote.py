@@ -33,6 +33,72 @@ from areal.infra.utils.launcher import TRITON_CACHE_PATH
 from areal.utils import perf_tracer, stats_tracker
 
 
+def _patch_sglang_get_device_memory() -> None:
+    """Monkey-patch SGLang's get_nvgpu_memory_capacity() to handle GLIBC errors.
+
+    Root cause: On Rorqual compute nodes, nvidia-smi subprocess loads libstdbuf.so
+    from CVMFS overlay, which requires newer GLIBC than /lib64/libc.so.6. This
+    causes RuntimeError: "nvidia-smi error: version `GLIBC_ABI_DT_RELR' not found".
+
+    Fix: Use torch.cuda.mem_get_info() as fallback when nvidia-smi fails.
+    This patch is applied before SGLang server subprocess is launched.
+    """
+    try:
+        import subprocess
+
+        import torch
+
+        import sglang.srt.utils.common
+
+        original_get_nvgpu_memory_capacity = (
+            sglang.srt.utils.common.get_nvgpu_memory_capacity
+        )
+
+        def patched_get_nvgpu_memory_capacity() -> int:
+            """Get GPU memory in MB, with torch fallback on nvidia-smi failure."""
+            # Try nvidia-smi first (original behavior)
+            try:
+                result = subprocess.run(
+                    [
+                        "nvidia-smi",
+                        "--query-gpu=memory.total",
+                        "--format=csv,noheader,nounits",
+                        "-i",
+                        "0",
+                    ],
+                    capture_output=True,
+                    timeout=5,
+                    text=True,
+                )
+                if result.returncode == 0:
+                    mem_mb = int(float(result.stdout.strip().split("\n")[0].strip()))
+                    return mem_mb
+            except (subprocess.TimeoutExpired, OSError, ValueError):
+                pass
+
+            # Fallback to torch.cuda.mem_get_info() (recommended on GLIBC issues)
+            if torch.cuda.is_available():
+                try:
+                    total_memory_bytes = torch.cuda.mem_get_info()[1]
+                    return total_memory_bytes // 1024 // 1024  # Convert to MB
+                except RuntimeError:
+                    pass
+
+            # Last resort: raise error
+            raise RuntimeError(
+                "Failed to get GPU memory via nvidia-smi and torch.cuda.mem_get_info(). "
+                "CUDA may not be properly initialized."
+            )
+
+        # Apply patch
+        sglang.srt.utils.common.get_nvgpu_memory_capacity = (
+            patched_get_nvgpu_memory_capacity
+        )
+    except (ImportError, AttributeError):
+        # SGLang not installed or different version; skip patch
+        pass
+
+
 class SGLangBackend:
     """SGLang-specific backend implementation for remote inference."""
 
@@ -231,10 +297,18 @@ class SGLangBackend:
 
     def launch_server(self, server_args: dict[str, Any]) -> subprocess.Popen:
         """Launch SGLang server subprocess."""
+        # Apply GLIBC error patch before SGLang imports (which trigger device detection)
+        _patch_sglang_get_device_memory()
+
         cmd = SGLangConfig.build_cmd_from_args(server_args)
         _env = os.environ.copy()
         triton_cache_path = _env.get("TRITON_CACHE_PATH", TRITON_CACHE_PATH)
         _env["TRITON_CACHE_PATH"] = os.path.join(triton_cache_path, str(uuid.uuid4()))
+
+        # Clean environment to prevent libstdbuf.so injection from CVMFS overlay
+        # which causes GLIBC_ABI_DT_RELR errors on compute nodes
+        _env.pop("LD_PRELOAD", None)
+        _env.pop("DYLD_INSERT_LIBRARIES", None)
 
         return subprocess.Popen(
             cmd,
