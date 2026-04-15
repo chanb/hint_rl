@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --account=aip-schuurma
-#SBATCH --time=06:00:00
-#SBATCH --mem=32GB
+#SBATCH --account=def-schuurma
+#SBATCH --time=72:00:00
+#SBATCH --mem=64G
 #SBATCH --cpus-per-task=2
-#SBATCH --gres=gpu:2
+#SBATCH --gpus-per-node=h100:2
 #SBATCH --array=1-1
 #SBATCH --output=/home/chanb/scratch/logs/hint_rl/%j.out
 

@@ -9,12 +9,12 @@ tokenizer_path: ${actor.path}
 cluster:
   n_nodes: 1
   n_gpus_per_node: 4
-  fileroot: /home/chanb/scratch/hint_rl_results
+  fileroot: /home/chanb/links/scratch/hint_rl_results
   name_resolve:
     type: nfs
-    nfs_record_root: /home/chanb/scratch/hint_rl_results/name_resolve
+    nfs_record_root: /home/chanb/links/scratch/hint_rl_results/name_resolve
 
-allocation_mode: sglang:d2p1t1+fsdp:d2
+allocation_mode: sglang:d1+d1
 
 scheduler:
   type: local
@@ -50,7 +50,7 @@ gconfig:
 actor:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  path: nvidia/OpenMath-Nemotron-1.5B
+  path: /home/chanb/links/scratch/models/OpenMath-Nemotron-1.5B
   init_from_scratch: false
   disable_dropout: true
   gradient_checkpointing: true
@@ -144,7 +144,7 @@ train_dataset:
   shuffle: true
   pin_memory: true
   num_workers: 1
-  path: /home/chanb/scratch/datasets/questa/data/openr1_hint_sep
+  path: /home/chanb/links/scratch/datasets/questa/data/openr1_hint_sep
   type: rl
   split: train
   max_length: 4096
@@ -184,7 +184,7 @@ stats_logger:
   wandb:
     mode: disabled
   tensorboard:
-    path: /home/chanb/scratch/hint_rl_results/logs/tensorboard
+    path: /home/chanb/links/scratch/hint_rl_results/logs/tensorboard
 
 perf_tracer:
   experiment_name: ${experiment_name}
