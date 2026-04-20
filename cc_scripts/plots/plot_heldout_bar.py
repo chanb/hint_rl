@@ -29,10 +29,10 @@ DATASET_LABELS = {
 # model_tag → (display_label, color)
 # Add new models here as they become available.
 MODEL_REGISTRY = {
+    "hintrl": ("Hint RL (Nemotron 1.5B)", "#55A868"),
+    "questa": ("QuestA (Nemotron 1.5B)", "#C44E52"),
     "nemotron_base": ("OpenMath-Nemotron-1.5B", "#4C72B0"),
     "deepscaler_base": ("DeepScaleR-1.5B", "#DD8452"),
-    # trained checkpoints can be added later, e.g.:
-    # "hint_rl_step200": ("Hint RL (step 200)", "#55A868"),
 }
 
 
@@ -208,11 +208,14 @@ def main():
         ax.set_xticklabels(
             [DATASET_LABELS[ds] for ds in DATASETS], rotation=20, ha="right"
         )
-        ax.set_ylim(0, min(1.0, max(
-            (results[k][m].get(ds) or 0)
+        all_vals = [
+            results[k][m].get(ds) or 0
             for m in models
             for ds in DATASETS
-        ) * 1.3 + 0.05))
+        ]
+        ymax = min(1.0, max(all_vals) * 1.15 + 0.02)
+        ymin = max(0.0, min(v for v in all_vals if v > 0) * 0.88)
+        ax.set_ylim(ymin, ymax)
         ax.legend(fontsize=8)
 
     fig.suptitle("Heldout Math Evaluation — Base Models", fontsize=14)

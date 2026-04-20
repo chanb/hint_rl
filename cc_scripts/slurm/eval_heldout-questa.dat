@@ -1,0 +1,4 @@
+export trial_name=eval_aime24-questa actor_path=/home/fengdic/scratch/models/QuestA-Nemotron-1.5B dataset_name=aime24
+export trial_name=eval_aime25-questa actor_path=/home/fengdic/scratch/models/QuestA-Nemotron-1.5B dataset_name=aime25
+export trial_name=eval_olympiad_bench-questa actor_path=/home/fengdic/scratch/models/QuestA-Nemotron-1.5B dataset_name=olympiad_bench
+export trial_name=eval_hmmt_feb_2025-questa actor_path=/home/fengdic/scratch/models/QuestA-Nemotron-1.5B dataset_name=hmmt_feb_2025
