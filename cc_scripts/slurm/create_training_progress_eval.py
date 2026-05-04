@@ -32,7 +32,9 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--models_dir", type=str, help="The directory containing trained models")
+    parser.add_argument(
+        "--models_dir", type=str, help="The directory containing trained models"
+    )
     parser.add_argument("--dataset_path", type=str, help="The dataset to use")
     parser.add_argument("--exp_name", type=str, help="The experiment name")
     args = parser.parse_args()

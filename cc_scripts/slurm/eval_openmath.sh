@@ -30,25 +30,25 @@ for i in $(seq 1 $NUM_TASKS); do
   fi
 
   prev_job_id=$(sbatch --parsable \
-    --account=aip-schuurma \
+    --account=def-jacobsen \
     --time=12:00:00 \
     --mem=20GB \
     --cpus-per-task=2 \
     --gres=gpu:l40s:1 \
-    --output=/home/chanb/scratch/logs/hint_rl/%j.out \
+    --output=/scratch/tianyifa/logs/hint_rl/%j.out \
     <<EOF
 #!/bin/bash
 module load StdEnv/2023
 module load python/3.10.13
 module load cuda/12.9
-source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
+source /home/tianyifa/hint_rl/.venv/bin/activate
 
 $(sed -n "${i}p" < "$DAT_FILE")
 echo "Task index: $i"
 echo "Running on hostname \$(hostname)"
 
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/eval_math.py \
-  --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/eval/eval_math.yaml \
+python /home/tianyifa/hint_rl/cc_scripts/eval_math.py \
+  --config /home/tianyifa/hint_rl/cc_scripts/configs/eval/eval_math.yaml \
   trial_name=\${trial_name} \
   actor.path=\${actor_path} \
   valid_dataset.path=\${dataset_path}

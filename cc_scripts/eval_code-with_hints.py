@@ -1,4 +1,3 @@
-import copy
 import os
 import sys
 
@@ -38,7 +37,9 @@ def main(args):
 
     # Load evaluation dataset
     valid_dataset = get_custom_dataset(
-        split=config.valid_dataset.split, dataset_config=config.valid_dataset, tokenizer=tokenizer
+        split=config.valid_dataset.split,
+        dataset_config=config.valid_dataset,
+        tokenizer=tokenizer,
     )
     valid_dataloader = create_dataloader(
         valid_dataset,
@@ -79,15 +80,13 @@ def main(args):
 
         # Create evaluation workflow
         # workflow = "areal.workflow.rlvr.RLVRWorkflow"
-        workflow="areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow"
+        workflow = "areal.workflow.dynamic_hint_rlvr.DynamicHintRLVRWorkflow"
         workflow_kwargs = dict(
             reward_fn="areal.reward.opencode.opencode_reward_fn",
             gconfig=config.gconfig,
             tokenizer=config.tokenizer_path,
             enable_thinking=False,
-            hint_percentage=dict(
-                initial_hint=config.dynamic_hint.initial_hint
-            ),
+            hint_percentage=dict(initial_hint=config.dynamic_hint.initial_hint),
         )
 
         rollout_dir = os.path.join(
@@ -97,7 +96,7 @@ def main(args):
                 fileroot=config.cluster.fileroot,
             ),
             "rollout",
-            "0"
+            "0",
         )
 
         # Submit all evaluation tasks

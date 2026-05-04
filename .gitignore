@@ -204,3 +204,4 @@ wandb/
 outputs/
 sympy/
 !/docs/figures/*
+.pre-commit-config.local.yaml

@@ -8,9 +8,9 @@
 
 set -euo pipefail
 
-REPO_ROOT=${REPO_ROOT:-/home/fengdic/evan_workspace/hint_rl}
-SCRATCH=${SCRATCH:-/home/fengdic/scratch}
-ACCOUNT=${ACCOUNT:-def-ashique}
+REPO_ROOT=${REPO_ROOT:-/home/tianyifa/hint_rl}
+SCRATCH=${SCRATCH:-/scratch/tianyifa}
+ACCOUNT=${ACCOUNT:-def-jacobsen}
 N_SAMPLES=${N_SAMPLES:-32}
 MAX_CONCURRENT=${MAX_CONCURRENT:-8}
 GPU_TYPE=${GPU_TYPE:-h100}

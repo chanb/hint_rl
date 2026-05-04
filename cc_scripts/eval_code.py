@@ -37,7 +37,9 @@ def main(args):
 
     # Load evaluation dataset
     valid_dataset = get_custom_dataset(
-        split=config.valid_dataset.split, dataset_config=config.valid_dataset, tokenizer=tokenizer
+        split=config.valid_dataset.split,
+        dataset_config=config.valid_dataset,
+        tokenizer=tokenizer,
     )
     valid_dataloader = create_dataloader(
         valid_dataset,
@@ -92,7 +94,7 @@ def main(args):
                 fileroot=config.cluster.fileroot,
             ),
             "rollout",
-            "0"
+            "0",
         )
 
         # Submit all evaluation tasks

@@ -1,47 +1,22 @@
 #!/bin/bash
-#SBATCH --account=aip-schuurma
-#SBATCH --time=06:00:00
-#SBATCH --mem=32GB
-#SBATCH --cpus-per-task=2
-#SBATCH --gres=gpu:2
-#SBATCH --array=1-1
-#SBATCH --output=/home/chanb/scratch/logs/hint_rl/%j.out
+#SBATCH --account=def-jacobsen
+#SBATCH --time=72:00:00
+#SBATCH --mem=200GB
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:h100:2
+#SBATCH --nodes=1
+#SBATCH --output=/scratch/tianyifa/logs/hint_rl/%j.out
+
+REPO_ROOT=/home/tianyifa/hint_rl
 
 module load StdEnv/2023
-module load python/3.10.13
 module load cuda/12.9
-source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
+unset LD_PRELOAD
+source ${REPO_ROOT}/.venv/bin/activate
 
-# python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
-#     --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
 
-# python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
-#     --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
-#     train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
-#     train_dataset.batch_size=8 \
-#     experiment_name=debug-openmath-opsd \
-#     trial_name=debug \
-#     rollout.max_concurrent_rollouts=16 \
-#     rollout.queue_size=16 \
-#     allocation_mode=sglang:d1p1t1+d1
-
-
-# python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
-#     --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
-#     train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
-#     train_dataset.batch_size=8 \
-#     experiment_name=debug-openmath-opsd \
-#     trial_name=debug_with_ref_inplace \
-#     rollout.max_concurrent_rollouts=16 \
-#     rollout.queue_size=16 \
-#     allocation_mode=sglang:d1p1t1+d1
-
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath_opsd.py \
-    --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_opsd.yaml \
-    train_dataset.path=/home/chanb/scratch/datasets/questa/data/openr1_hint_sep-small \
-    train_dataset.batch_size=8 \
-    experiment_name=debug-openmath-opsd \
-    trial_name=debug_with_ref_inplace-reverse_kl \
-    rollout.max_concurrent_rollouts=16 \
-    rollout.queue_size=16 \
-    allocation_mode=sglang:d1p1t1+d1
+python ${REPO_ROOT}/cc_scripts/train_openmath_opsd.py \
+    --config ${REPO_ROOT}/cc_scripts/configs/train/openmath_opsd.yaml

@@ -1,15 +1,22 @@
 #!/bin/bash
-#SBATCH --account=aip-schuurma
+#SBATCH --account=def-jacobsen
 #SBATCH --time=72:00:00
 #SBATCH --mem=400GB
-#SBATCH --cpus-per-task=4
-#SBATCH --gres=gpu:4
-#SBATCH --array=1-1
-#SBATCH --output=/home/chanb/scratch/logs/hint_rl/%j.out
+#SBATCH --cpus-per-task=16
+#SBATCH --gres=gpu:h100:4
+#SBATCH --nodes=1
+#SBATCH --output=/scratch/tianyifa/logs/hint_rl/%j.out
+
+REPO_ROOT=/home/tianyifa/hint_rl
 
 module load StdEnv/2023
-module load python/3.10.13
 module load cuda/12.9
-source /home/chanb/research/hint_rl/hint_rl/.venv/bin/activate
+unset LD_PRELOAD
+source ${REPO_ROOT}/.venv/bin/activate
 
-python /home/chanb/research/hint_rl/hint_rl/cc_scripts/train_openmath.py --config /home/chanb/research/hint_rl/hint_rl/cc_scripts/configs/train/openmath_hint_rl.yaml
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+
+python ${REPO_ROOT}/cc_scripts/train_openmath.py \
+    --config ${REPO_ROOT}/cc_scripts/configs/train/openmath_hint_rl.yaml

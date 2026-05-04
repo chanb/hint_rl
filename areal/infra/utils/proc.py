@@ -59,22 +59,27 @@ def build_streaming_log_cmd(
     else:
         cmd_str = cmd
 
-    # Build prefix with env vars if provided
-    prefix_parts = []
+    # Use PYTHONUNBUFFERED=1 instead of stdbuf for line-buffered output.
+    # stdbuf on some clusters (e.g., Alliance Canada Rorqual) resolves to a binary
+    # that sets LD_PRELOAD=libstdbuf.so, which may require GLIBC symbols absent on
+    # compute nodes. PYTHONUNBUFFERED=1 achieves the same result for Python workers
+    # without the fragility.
+    effective_env_vars = {"PYTHONUNBUFFERED": "1"}
     if env_vars:
-        prefix_parts.append(
-            " ".join(f"{k}={shlex.quote(str(v))}" for k, v in env_vars.items())
-        )
-    prefix_parts.append(f"stdbuf -oL {cmd_str}")
+        effective_env_vars.update(env_vars)
+    prefix_parts = [
+        " ".join(f"{k}={shlex.quote(str(v))}" for k, v in effective_env_vars.items()),
+        cmd_str,
+    ]
     full_cmd = " ".join(prefix_parts)
 
     # Build log prefix for merged log
     log_prefix = f"[{role}]".ljust(LOG_PREFIX_WIDTH)
 
-    # Construct tee/sed pipeline
+    # Construct tee/sed pipeline (no stdbuf needed for sed)
     shell_cmd = (
         f"{full_cmd} 2>&1 "
-        f"| tee -a {log_file} >(stdbuf -oL sed 's/^/{log_prefix}/' >> {merged_log})"
+        f"| tee -a {log_file} >(sed 's/^/{log_prefix}/' >> {merged_log})"
     )
     return shell_cmd
 

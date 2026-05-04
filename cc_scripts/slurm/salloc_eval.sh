@@ -2,7 +2,7 @@
 # salloc_eval.sh - Get an interactive GPU allocation and run a single heldout eval
 #
 # Step 1: Get a GPU allocation
-#   salloc --account=def-ashique --time=1:00:00 --mem=64G --cpus-per-task=4 --gres=gpu:h100:1
+#   salloc --account=def-jacobsen --time=1:00:00 --mem=64G --cpus-per-task=4 --gres=gpu:h100:1
 #
 # Step 2: Inside the allocation, run this script
 #   bash cc_scripts/slurm/salloc_eval.sh <dataset_name> [actor_path]
@@ -12,7 +12,7 @@
 #   bash cc_scripts/slurm/salloc_eval.sh aime24
 #
 #   # Eval AIME25 with a specific checkpoint
-#   bash cc_scripts/slurm/salloc_eval.sh aime25 /home/fengdic/scratch/hint_rl_results/checkpoints/.../epoch10...
+#   bash cc_scripts/slurm/salloc_eval.sh aime25 /scratch/tianyifa/hint_rl_results/checkpoints/.../epoch10...
 #
 #   # Eval OlympiadBench with DeepScaleR
 #   bash cc_scripts/slurm/salloc_eval.sh olympiad_bench agentica-org/DeepScaleR-1.5B-Preview
@@ -25,10 +25,10 @@
 set -euo pipefail
 
 DATASET_NAME="${1:?Usage: $0 <dataset_name> [actor_path]}"
-ACTOR_PATH="${2:-/home/fengdic/scratch/models/OpenMath-Nemotron-1.5B}"
+ACTOR_PATH="${2:-/scratch/tianyifa/models/OpenMath-Nemotron-1.5B}"
 
-REPO_ROOT=${REPO_ROOT:-/home/fengdic/evan_workspace/hint_rl}
-SCRATCH=${SCRATCH:-/home/fengdic/scratch}
+REPO_ROOT=${REPO_ROOT:-/home/tianyifa/hint_rl}
+SCRATCH=${SCRATCH:-/scratch/tianyifa}
 N_SAMPLES=${N_SAMPLES:-32}
 MAX_CONCURRENT=${MAX_CONCURRENT:-8}
 TRIAL_NAME="salloc_eval_${DATASET_NAME}-$(date +%Y%m%d_%H%M%S)"
@@ -73,5 +73,5 @@ python ${REPO_ROOT}/cc_scripts/eval_math.py \
 echo ""
 echo "========================================"
 echo "  Done: $(date)"
-echo "  Results: ${SCRATCH}/hint_rl_results/logs/fengdic/eval_${DATASET_NAME}/${TRIAL_NAME}/rollout/0/"
+echo "  Results: ${SCRATCH}/hint_rl_results/logs/tianyifa/eval_${DATASET_NAME}/${TRIAL_NAME}/rollout/0/"
 echo "========================================"

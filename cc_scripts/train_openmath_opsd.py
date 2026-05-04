@@ -1,5 +1,3 @@
-import _pickle as pickle
-import os
 import sys
 
 from areal import OPSDTrainer
@@ -22,7 +20,7 @@ def main(args):
         gconfig=config.gconfig,
         tokenizer=config.tokenizer_path,
         enable_thinking=False,
-        hint_percentage=dict(initial_hint=config.dynamic_hint.initial_hint)
+        hint_percentage=dict(initial_hint=config.dynamic_hint.initial_hint),
     )
 
     valid_dataset = None

@@ -70,6 +70,8 @@ python3 train.py --config path/to/config.yaml actor.lr=1e-4 seed=42
 
 - [ArchonEngine Configuration](section-archon-engine)
 - [DistributedDataParallel Configuration](section-distributed-data-parallel)
+- [DynamicHint Configuration](section-dynamic-hint)
+- [DynamicHintSchedule Configuration](section-dynamic-hint-schedule)
 - [FP8Engine Configuration](section-fp8-engine)
 - [MegatronEngine Configuration](section-megatron-engine)
 - [OpenAIProxy Configuration](section-open-ai-proxy)
@@ -147,6 +149,7 @@ A dummy place holder of GRPO config for backward compatibility.
 | `critic`             | [`PPOCriticConfig`](section-ppo-critic) \| None                           | `None`       | -                                                                                                                                                                                                                |
 | `teacher`            | [`TeacherConfig`](section-teacher) \| None                                | `None`       | Optional teacher model configuration used for on-policy distillation during PPO training. If provided, the actor may be trained to match the teacher in addition to the standard PPO objective.                  |
 | `dynamic_bs`         | boolean                                                                   | `False`      | Enable dynamic batch sizing in prepare_batch. When True, batch collection stops when (accepted + rejected) >= batch_size, returning only accepted results. This results in variable-sized batches of valid data. |
+| `dynamic_hint`       | [`DynamicHintConfig`](section-dynamic-hint) \| None                       | `None`       | Enable dynamic partial hint conditioning on sample                                                                                                                                                               |
 
 (section-ppo)=
 
@@ -184,6 +187,7 @@ Configuration for Proximal Policy Optimization (PPO) reinforcement learning expe
 | `critic`             | [`PPOCriticConfig`](section-ppo-critic) \| None                           | `None`       | -                                                                                                                                                                                                                |
 | `teacher`            | [`TeacherConfig`](section-teacher) \| None                                | `None`       | Optional teacher model configuration used for on-policy distillation during PPO training. If provided, the actor may be trained to match the teacher in addition to the standard PPO objective.                  |
 | `dynamic_bs`         | boolean                                                                   | `False`      | Enable dynamic batch sizing in prepare_batch. When True, batch collection stops when (accepted + rejected) >= batch_size, returning only accepted results. This results in variable-sized batches of valid data. |
+| `dynamic_hint`       | [`DynamicHintConfig`](section-dynamic-hint) \| None                       | `None`       | Enable dynamic partial hint conditioning on sample                                                                                                                                                               |
 
 (section-rw)=
 
@@ -251,12 +255,14 @@ Configuration for Supervised Fine-Tuning (SFT) experiments.
 
 Configuration for Fully Sharded Data Parallel (FSDP) training backend.
 
-| Parameter                | Type                                                 | Default | Description                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------ | ---------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `wrap_policy`            | [`FSDPWrapPolicy`](section-fsdp-wrap-policy) \| None | `None`  | FSDP wrap policy, specifying model layers to wrap.                                                                                                                                                                                                                                                                                                              |
-| `offload_params`         | boolean                                              | `False` | Whether to offload FSDP parameters to CPU.                                                                                                                                                                                                                                                                                                                      |
-| `memory_efficient_load`  | boolean                                              | `False` | Enable memory-efficient model loading. When enabled, model weights are initialized on CPU and only rank 0 loads pretrained weights, which are then broadcast to all ranks after FSDP sharding. This reduces peak GPU memory during initialization for large models. Note: For VLMs, rank 0 broadcast is not used; each rank loads weights independently on CPU. |
-| `shard_vision_across_sp` | boolean                                              | `False` | Shard vision encoder across SP ranks by image. Only effective when context_parallel_size > 1.                                                                                                                                                                                                                                                                   |
+| Parameter                    | Type                                                 | Default | Description                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------- | ---------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wrap_policy`                | [`FSDPWrapPolicy`](section-fsdp-wrap-policy) \| None | `None`  | FSDP wrap policy, specifying model layers to wrap.                                                                                                                                                                                                                                                                                                              |
+| `offload_params`             | boolean                                              | `False` | Whether to offload FSDP parameters to CPU.                                                                                                                                                                                                                                                                                                                      |
+| `memory_efficient_load`      | boolean                                              | `False` | Enable memory-efficient model loading. When enabled, model weights are initialized on CPU and only rank 0 loads pretrained weights, which are then broadcast to all ranks after FSDP sharding. This reduces peak GPU memory during initialization for large models. Note: For VLMs, rank 0 broadcast is not used; each rank loads weights independently on CPU. |
+| `shard_vision_across_sp`     | boolean                                              | `False` | Shard vision encoder across SP ranks by image. Only effective when context_parallel_size > 1.                                                                                                                                                                                                                                                                   |
+| `per_layer_optim_step`       | boolean                                              | `False` | Run Adam step on GPU by streaming optimizer states layer-by-layer with async prefetching, instead of running on CPU. Optimizer states are automatically managed on CPU by the per-layer wrapper regardless of offload_params setting. Requires optimizer type 'adam' (AdamW).                                                                                   |
+| `optim_step_prefetch_layers` | integer                                              | `1`     | Number of layers to prefetch during per-layer optim step.                                                                                                                                                                                                                                                                                                       |
 
 (section-fsdp-wrap-policy)=
 
@@ -627,6 +633,7 @@ Configuration for training dataset loading and preprocessing.
 | `num_workers` | integer         | `0`          | Number of worker processes for data loading                                      |
 | `drop_last`   | boolean         | `True`       | Drop the last incomplete batch                                                   |
 | `max_length`  | integer \| None | `None`       | Maximum token length of sequences in dataset. Longer sequences are filtered out. |
+| `split`       | string          | **Required** | The split of the dataset to load                                                 |
 
 (section-valid-dataset)=
 
@@ -647,6 +654,7 @@ default to False.
 | `num_workers` | integer         | `0`          | Number of worker processes for data loading                                      |
 | `drop_last`   | boolean         | `False`      | Drop the last incomplete batch                                                   |
 | `max_length`  | integer \| None | `None`       | Maximum token length of sequences in dataset. Longer sequences are filtered out. |
+| `split`       | string          | **Required** | The split of the dataset to load                                                 |
 
 (section-cluster)=
 
@@ -828,6 +836,30 @@ Refer to Megatron-LM documentation for details.
 | `average_in_collective`     | boolean         | `False` | -           |
 | `fp8_param_gather`          | boolean         | `False` | -           |
 
+(section-dynamic-hint)=
+
+## DynamicHint Configuration
+
+Configuration for dynamic hint conditioning in PPO training.
+
+| Parameter               | Type                                                                 | Default      | Description                                                                         |
+| ----------------------- | -------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------- |
+| `initial_hint`          | integer                                                              | `0`          | The initial hint percentage for all samples.                                        |
+| `goldilock_zone`        | list of float                                                        | **Required** | The range \[p_1, p_2\] to determine when to change the hint %.                      |
+| `hint_delta`            | integer                                                              | `0`          | The amount of hint percentage change when the reward is outside the goldilock zone. |
+| `dynamic_hint_schedule` | [`DynamicHintScheduleConfig`](section-dynamic-hint-schedule) \| None | `None`       | Optional hint scheduling                                                            |
+
+(section-dynamic-hint-schedule)=
+
+## DynamicHintSchedule Configuration
+
+Configuration for dynamic hint schedule conditioning in PPO training.
+
+| Parameter          | Type            | Default      | Description                        |
+| ------------------ | --------------- | ------------ | ---------------------------------- |
+| `hint_percentages` | list of integer | **Required** | The hint % to switch to.           |
+| `change_steps`     | list of integer | **Required** | The global steps to change hint %. |
+
 (section-fp8-engine)=
 
 ## FP8Engine Configuration
@@ -964,6 +996,7 @@ Configuration class: SchedulingSpec
 | `mount`                  | string                 | `"/storage:/storage"`                        | Mount path for slurm.                                                                                                                                                                                                                                                                                                               |
 | `nodelist`               | string \| None         | `None`                                       | sbatch/srun's `--nodelist` option for slurm.                                                                                                                                                                                                                                                                                        |
 | `exclude`                | string \| None         | `None`                                       | sbatch/srun's `--exclude` option for slurm.                                                                                                                                                                                                                                                                                         |
+| `runtime`                | string \| None         | `None`                                       | sbatch/srun's `--time` option for slurm.                                                                                                                                                                                                                                                                                            |
 | `ray_placement_strategy` | string                 | `"shared"`                                   | Which placement strategy to use for Ray scheduling. Shared will produce 1 placement group for all workers in the role (training). Separate will 1 placement group per worker (rollout). Deferred will do the same as separate but defers accelerator scheduling (multinode rollout).  **Choices:** `shared`, `separate`, `deferred` |
 
 (section-scheduling-strategy)=

@@ -32,9 +32,7 @@ def main(args):
         with open(hint_percentage_path, "rb") as f:
             hint_percentage = pickle.load(f)
     else:
-        hint_percentage = dict(
-            initial_hint=config.dynamic_hint.initial_hint
-        )
+        hint_percentage = dict(initial_hint=config.dynamic_hint.initial_hint)
     workflow_kwargs["hint_percentage"] = hint_percentage
     print(workflow_kwargs)
 

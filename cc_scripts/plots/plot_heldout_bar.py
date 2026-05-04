@@ -13,7 +13,6 @@ import os
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 matplotlib.use("Agg")
 
@@ -68,7 +67,10 @@ def load_results(results_root, dataset_name, trial_name):
         return None
 
     all_rewards = []
-    for filename in sorted(os.listdir(rollout_dir), key=lambda f: int(f.split(".")[0]) if f.split(".")[0].isdigit() else 0):
+    for filename in sorted(
+        os.listdir(rollout_dir),
+        key=lambda f: int(f.split(".")[0]) if f.split(".")[0].isdigit() else 0,
+    ):
         if not filename.endswith(".jsonl"):
             continue
         filepath = os.path.join(rollout_dir, filename)
@@ -138,9 +140,9 @@ def main():
 
     # ── Print summary table ──────────────────────────────────────────────
     for k in args.k_values:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"  Pass@{k}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         header = f"{'Dataset':<20}" + "".join(
             f"{label:<25}" for label, _ in models.values()
         )
@@ -164,7 +166,9 @@ def main():
         for ds in DATASETS
     )
     if not has_data:
-        print("\nNo evaluation results found yet. Run evals first, then re-run this script.")
+        print(
+            "\nNo evaluation results found yet. Run evals first, then re-run this script."
+        )
         return
 
     # ── Plot ─────────────────────────────────────────────────────────────
@@ -185,9 +189,7 @@ def main():
                 values.append(val if val is not None else 0)
 
             offset = (m_idx - len(models) / 2 + 0.5) * width
-            bars = ax.bar(
-                x + offset, values, width, label=model_label, color=color
-            )
+            bars = ax.bar(x + offset, values, width, label=model_label, color=color)
 
             # Value labels on bars
             for bar, val in zip(bars, values):
@@ -208,11 +210,7 @@ def main():
         ax.set_xticklabels(
             [DATASET_LABELS[ds] for ds in DATASETS], rotation=20, ha="right"
         )
-        all_vals = [
-            results[k][m].get(ds) or 0
-            for m in models
-            for ds in DATASETS
-        ]
+        all_vals = [results[k][m].get(ds) or 0 for m in models for ds in DATASETS]
         ymax = min(1.0, max(all_vals) * 1.15 + 0.02)
         ymin = max(0.0, min(v for v in all_vals if v > 0) * 0.88)
         ax.set_ylim(ymin, ymax)

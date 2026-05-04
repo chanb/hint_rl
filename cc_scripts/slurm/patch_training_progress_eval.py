@@ -1,6 +1,7 @@
 import argparse
 import os
 
+
 def main(args):
     dat_file = args.dat_file
     log_dir = args.log_dir
@@ -31,7 +32,12 @@ def main(args):
         patch_dat_content += eval_map[trial_name]
 
     new_dat_file = dat_file.split("/")
-    new_dat_file = "/".join(new_dat_file[:-1]) + "/" + new_dat_file[-1].split(".dat")[0] + "-patched.dat"
+    new_dat_file = (
+        "/".join(new_dat_file[:-1])
+        + "/"
+        + new_dat_file[-1].split(".dat")[0]
+        + "-patched.dat"
+    )
 
     with open(new_dat_file, "w+") as f:
         f.write(patch_dat_content)
@@ -39,8 +45,12 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dat_file", type=str, help="The dat file that specifies the evaluation models")
-    parser.add_argument("--log_dir", type=str, help="The directory storing the evaluation results")
+    parser.add_argument(
+        "--dat_file", type=str, help="The dat file that specifies the evaluation models"
+    )
+    parser.add_argument(
+        "--log_dir", type=str, help="The directory storing the evaluation results"
+    )
     args = parser.parse_args()
 
     main(args)
